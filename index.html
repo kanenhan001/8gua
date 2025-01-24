@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>卜一卦</title>
 <script type="text/javascript" src="jquery.min.js"></script>
+<script src="marked.min.js"></script>
 <style>
   body { 
     font-family: Arial, sans-serif;
@@ -388,7 +389,7 @@ document.getElementById('explainButton').addEventListener('click', async functio
         modalContent.innerHTML = `
           <p>此卦为：${guaName}</p>
           <p>变爻：${changingYaoText}</p>
-          <p>卦象解释：${explanation}</p>
+          <p>卦象解释：${marked(explanation)}</p>
         `;
 
 		  },
