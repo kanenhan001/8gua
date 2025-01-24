@@ -383,7 +383,7 @@ document.getElementById('explainButton').addEventListener('click', async functio
 		  data: JSON.stringify(data1),
 		  success: function(response) {
 			  console.log(response);
-        const explanation = response.result || '暂无解释';
+        const explanation = response.choices[0].message.content || '暂无解释';
 
         modalContent.innerHTML = `
           <p>此卦为：${guaName}</p>
