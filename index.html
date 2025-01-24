@@ -370,7 +370,7 @@ document.getElementById('explainButton').addEventListener('click', async functio
 
     var data1 = {
 			url:'https://open.bigmodel.cn/api/paas/v4/chat/completions',
-			content:`请解释易经中${guaName}卦的${changingYaoText}爻变的含义，用通俗易懂的语言，限制在2000字以内。`
+			content:`${guaName} ${changingYaoText}`
 		};
 
     console.info(url_prex+"quertGLMAI");
