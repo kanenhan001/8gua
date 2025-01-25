@@ -197,7 +197,6 @@
       btnName2 = "好的，不卜了";
     }
     // 使用其他提示插件替换confirm
-    
     Swal.fire({
         title: '提示',
         text: msg,
@@ -372,7 +371,7 @@ document.getElementById('explainButton').addEventListener('click', async functio
   modalContent.innerHTML = `
     <p>此卦为：${guaName}</p>
     <p>变爻：${changingYaoText}</p>
-    <p>正在AI解挂（由于使用的是免费的AI接口，所以比较慢，请耐心等待，可能需要等待10-30秒左右）...</p>
+    <p id='output'>正在AI解挂,请稍后...</p>
   `;
   
   modal.style.display = "block";
@@ -385,37 +384,41 @@ document.getElementById('explainButton').addEventListener('click', async functio
                                 "role": "user",
                                 "content":  `${guaName} ${changingYaoText}`
                         }
-                ]
+                ],
+      "stream":true
 		};
-		$.ajax({
-		  url: "https://open.bigmodel.cn/api/paas/v4/chat/completions",
-		  type: 'POST',
-		  contentType: "application/json;charset=utf-8",
-		  headers: {
-        'Content-Type': 'application/json;charset=utf-8',
-		    'Authorization': 'Bearer 1f0cc7d00b2f4c16b55c23eecc7afca4.NioIXaex3P9Kx2PW' // 替换为您的访问令牌
-		  },
-		  data: JSON.stringify(data1),
-		  success: function(response) {
-			  console.log(response);
-        const explanation = response.choices[0].message.content || '暂无解释';
+    getOpenAIStream(data1);
+    
 
-        modalContent.innerHTML = `
-          <p>此卦为：${guaName}</p>
-          <p>变爻：${changingYaoText}</p>
-          <p>卦象解释：${marked(explanation)}</p>
-        `;
+		// $.ajax({
+		//   url: "https://open.bigmodel.cn/api/paas/v4/chat/completions",
+		//   type: 'POST',
+		//   contentType: "application/json;charset=utf-8",
+		//   headers: {
+    //     'Content-Type': 'application/json;charset=utf-8',
+		//     'Authorization': 'Bearer 1f0cc7d00b2f4c16b55c23eecc7afca4.NioIXaex3P9Kx2PW' // 替换为您的访问令牌
+		//   },
+		//   data: JSON.stringify(data1),
+		//   success: function(response) {
+		// 	  console.log(response);
+    //     const explanation = response.choices[0].message.content || '暂无解释';
 
-		  },
-		  error: function(jqXHR, textStatus, errorThrown) {
-			  console.log('错误：' + errorThrown);
-        modalContent.innerHTML = `
-          <p>此卦为：${guaName}</p>
-          <p>变爻：${changingYaoText}</p>
-          <p>卦象解释：抱歉，获取解释失败，请稍后再试。</p>
-        `;
-		  }
-		});
+    //     modalContent.innerHTML = `
+    //       <p>此卦为：${guaName}</p>
+    //       <p>变爻：${changingYaoText}</p>
+    //       <p>卦象解释：${marked(explanation)}</p>
+    //     `;
+
+		//   },
+		//   error: function(jqXHR, textStatus, errorThrown) {
+		// 	  console.log('错误：' + errorThrown);
+    //     modalContent.innerHTML = `
+    //       <p>此卦为：${guaName}</p>
+    //       <p>变爻：${changingYaoText}</p>
+    //       <p>卦象解释：抱歉，获取解释失败，请稍后再试。</p>
+    //     `;
+		//   }
+		// });
     
   } catch (error) {
     console.error('获取解释失败：', error);
@@ -439,6 +442,47 @@ window.addEventListener('click', function(event) {
     modal.style.display = "none";
   }
 });
+
+async function getOpenAIStream(data1) {
+        const response = await fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer 1f0cc7d00b2f4c16b55c23eecc7afca4.NioIXaex3P9Kx2PW'
+            },
+            body: JSON.stringify(data1)
+        });
+    
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let done = false;
+        let textBuffer = '';
+    
+        while (!done) {
+            const { value, done: readerDone } = await reader.read();
+            if (value) {
+                const chunkValue = decoder.decode(value);
+                //console.info(chunkValue);
+                const lines = chunkValue.split('\n').filter(line => line.trim() !== '');
+                lines.forEach(line => {
+                    if (line.startsWith('data: {')) {
+                        const jsonLine = line.replace('data: ', '');
+                        const jsonData = JSON.parse(jsonLine);
+                        if (jsonData.choices && jsonData.choices[0].delta.content) {
+                            textBuffer += jsonData.choices[0].delta.content;
+                            document.getElementById('output').innerText = marked(textBuffer); // 逐步更新页面内容
+                        } else {
+                            done = readerDone; // 如果完成，则结束循环
+                        }
+                    } else {
+                        done = readerDone; // 如果服务器发送了[DONE]，结束循环
+                    }
+                });
+            } else {
+                done = readerDone; // 流结束
+            }
+        }
+    }
 </script>
 </body>
 </html>
