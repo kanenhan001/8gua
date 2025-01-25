@@ -146,8 +146,12 @@
   }
 
   .close {
+    position: fixed;
+    left: auto; /* 让元素向左对齐 */
+    right: 30px;   /* 紧贴右侧 */
     color: #aaa;
-    float: right;
+    /* float: right; */
+
     font-size: 28px;
     font-weight: bold;
     cursor: pointer;
@@ -191,7 +195,7 @@
 </div>
 
 <div id="explainModal" class="modal">
-  <div class="modal-content" style="max-height: 80vh; overflow-y: auto;">
+  <div id="modal-content" class="modal-content" style="max-height: 80vh; overflow-y: auto;">
     <span class="close">&times;</span>
     <h2 id="modalTitle"></h2>
     <div id="modalContent"></div>
@@ -363,19 +367,19 @@ const yaoPositionNames = ["初", "二", "三", "四", "五", "上"];
 var buguanum = 0 ;
 
 function getGuaName() {
-    console.info(yaoArr);
+    // console.info(yaoArr);
     var targetCode = yaoArr.join("");
-    console.info(targetCode);
+    // console.info(targetCode);
     const guaName = hexagrams.find(item => item.code === targetCode);
-    console.info(guaName.name);
+    // console.info(guaName.name);
     
     // 显示卦名和变爻位置
     document.getElementById('guaName').textContent = guaName.name;
 
 
-    console.info(changingYaoPosition)
-    console.info(yaoArr[changingYaoPosition])
-    console.info(hexagramyao[yaoArr[changingYaoPosition]])
+    // console.info(changingYaoPosition)
+    // console.info(yaoArr[changingYaoPosition])
+    // console.info(hexagramyao[yaoArr[changingYaoPosition]])
     changingYaoName = hexagramyao[yaoArr[changingYaoPosition]];
 
     if(changingYaoPosition == 0 || changingYaoPosition == 5){
@@ -475,7 +479,8 @@ async function getOpenAIStream(data1) {
                   if (jsonData.choices && jsonData.choices[0].delta.content) {
                       textBuffer += jsonData.choices[0].delta.content;
                       document.getElementById('output').innerHTML = marked(textBuffer); // 逐步更新页面内容
-                      document.getElementById('explainModal').scrollIntoView({ behavior: 'smooth', block: 'end' });
+                      var div1 = document.getElementById('modal-content');
+                      div1.scrollTop = div1.scrollHeight;//滚动条始终在底部
                   } else {
                       done = readerDone; // 如果完成，则结束循环
                   }
