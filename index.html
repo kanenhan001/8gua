@@ -30,14 +30,28 @@
     min-width: 280px;
     max-width: 600px;
     padding: 20px; 
-    border: 1px solid #ccc; 
+    /* border: 1px solid #ccc; */
     border-radius: 5px;
-    background-color: rgba(255, 255, 255, 0.95);
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    /* background-color: rgba(255, 255, 255, 0.95); */
+    /* box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); */
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+  }
+
+  .header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: transparent;
+    text-align: center;
+    color: #fff;
+    font-size: 12px;
+    padding: 10px 0;
+    z-index: 1000;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
   }
 
   .footer {
@@ -145,6 +159,9 @@
 </style>
 </head>
 <body>
+  <div class="header" id="logo" style="text-align: center;">
+    <img src="logo.png" alt="Logo" style="width:100px;max-width: 100%; height: auto;border-radius: 50%;">
+  </div>
 <div class="container">
   <div id="bagua"></div>
   <div class="button-container">
@@ -368,6 +385,7 @@ function getGuaName() {
     } 
     
     // 显示卜卦和解卦按钮，并修改卜卦按钮文字
+    document.getElementById('logo').style.display = 'none';
     document.getElementById('startButton').textContent = '再卜一卦';
     buguanum++;
     document.getElementById('startButton').style.display = 'inline-block';
@@ -400,10 +418,10 @@ document.getElementById('explainButton').addEventListener('click', async functio
     var data1 = {
       "model":"glm-4-air-0111",
       "messages": [
-                      {
-                              "role": "user",
-                              "content":  `${guaName} ${changingYaoText}，请结合问题${ques}进行解读`
-                      }
+                    {
+                      "role": "user",
+                      "content":  `${guaName} ${changingYaoText}，请结合问题${ques}进行解读`
+                    }
                 ],
       "stream":true
 		};
@@ -425,14 +443,6 @@ document.querySelector('.close').addEventListener('click', function() {
   // 
   reload = false;
 });
-
-// 点击模态框外部关闭
-// window.addEventListener('click', function(event) {
-//   const modal = document.getElementById('explainModal');
-//   if (event.target == modal) {
-//     modal.style.display = "none";
-//   }
-// });
 
 //流式获取AI返回结果 TODO 实验性质，apikey在这里硬编码了。生产环境需要改到后端。
 async function getOpenAIStream(data1) {
