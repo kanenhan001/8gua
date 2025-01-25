@@ -475,6 +475,7 @@ async function getOpenAIStream(data1) {
                   if (jsonData.choices && jsonData.choices[0].delta.content) {
                       textBuffer += jsonData.choices[0].delta.content;
                       document.getElementById('output').innerHTML = marked(textBuffer); // 逐步更新页面内容
+                      document.getElementById('explainModal').scrollIntoView({ behavior: 'smooth', block: 'end' });
                   } else {
                       done = readerDone; // 如果完成，则结束循环
                   }
