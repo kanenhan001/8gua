@@ -7,6 +7,8 @@
 <title>卜一卦</title>
 <script type="text/javascript" src="jquery.min.js"></script>
 <script type="text/javascript" src="marked.min.js"></script>
+<script type="text/javascript" src="sweetalert2.min.js"></script>
+<link href="bulma.min.css" rel="stylesheet">
 <style>
   body { 
     font-family: Arial, sans-serif;
@@ -186,30 +188,46 @@
   document.getElementById('startButton').addEventListener('click', function() {
 
     var msg = "请先在心里想好您要推测的事情";
-    if(buguanum > 1){
+    var btnName1 = "想好了，卜吧";
+    var btnName2 = "不卜了";
+
+    if(buguanum > 2){
       msg = "相信则卜，不信则不卜，建议您一天不要卜卦超过三次哦。如果您今天卜卦结果不太好，不妨过两天 再卜卜看，说不定会有转机哦。"
+      btnName1 = "我还想再卜一次";
+      btnName2 = "好的，不卜了";
     }
-    console.info(msg);
-    if (confirm(msg)) {
-        count = 0;
-        changingYaoPosition = -1;
-        changingYaoName = '';
-        yaoArr = [];
-        baguaDiv.innerHTML = '';
-        document.getElementById('guaName').textContent = '';
-        document.getElementById('changingYaoName').textContent = '';
-        
-        // 隐藏卜卦按钮
-        document.getElementById('startButton').style.display = 'none';
-        
-        changingYaoPosition = Math.floor(Math.random() * 6);
-        
-        getRandomHexagram();
-        interval = setInterval(function() {
-            getRandomHexagram()
-        }, 1000);
-        document.getElementById('explainButton').style.display = 'none';
-    }
+    // 使用其他提示插件替换confirm
+    
+    Swal.fire({
+        title: '提示',
+        text: msg,
+        icon: 'info',
+        showCancelButton: true,
+        confirmButtonText: btnName1,
+        cancelButtonText: btnName2
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // 用户点击了确定
+            count = 0;
+            changingYaoPosition = -1;
+            changingYaoName = '';
+            yaoArr = [];
+            baguaDiv.innerHTML = '';
+            document.getElementById('guaName').textContent = '';
+            document.getElementById('changingYaoName').textContent = '';
+            
+            // 隐藏卜卦按钮
+            document.getElementById('startButton').style.display = 'none';
+            
+            changingYaoPosition = Math.floor(Math.random() * 6);
+            
+            getRandomHexagram();
+            interval = setInterval(function() {
+                getRandomHexagram()
+            }, 1000);
+            document.getElementById('explainButton').style.display = 'none';
+        }
+    });
   });
 
   
