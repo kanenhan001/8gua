@@ -148,8 +148,8 @@
 </div>
 
 <div class="footer">
-  <p style="margin: 5px 0;">本系统由AI协助制作完成<br>如您有相关AI开发需求或者看不懂卦辞，<br>都可联系我，联系电话：<a href="tel:15033768387" style="color: #fff;">15033768387</a></p>
-  <p style="margin: 5px 0;">© 2025 版权所有</p>
+  <p style="margin: 5px 0;">本系统由AI协助制作完成<br>如您有相关AI开发需求或者看不懂卦辞，<br>都可联系我，联系电话：<a href="tel:15033768387" style="color: #fff;">15033768387</a>（深夜勿扰）</p>
+  <p style="margin: 5px 0;">© 2025 皮球爸爸 版权所有</p>
 </div>
 
 <div id="guaNameDiv" style="
@@ -184,24 +184,32 @@
   var yaoArr = [];
 
   document.getElementById('startButton').addEventListener('click', function() {
-    count = 0;
-    changingYaoPosition = -1;
-    changingYaoName = '';
-    yaoArr = [];
-    baguaDiv.innerHTML = '';
-    document.getElementById('guaName').textContent = '';
-    document.getElementById('changingYaoName').textContent = '';
-    
-    // 隐藏卜卦按钮
-    document.getElementById('startButton').style.display = 'none';
-    
-    changingYaoPosition = Math.floor(Math.random() * 6);
-    
-    getRandomHexagram();
-    interval = setInterval(function() {
-        getRandomHexagram()
-    }, 1000);
-    document.getElementById('explainButton').style.display = 'none';
+
+    var msg = "请先在心里想好您要推测的事情";
+    if(buguanum > 1){
+      msg = "相信则卜，不信则不卜，建议您一天不要卜卦超过三次哦。如果您今天卜卦结果不太好，不妨过两天 再卜卜看，说不定会有转机哦。"
+    }
+    console.info(msg);
+    if (confirm(msg)) {
+        count = 0;
+        changingYaoPosition = -1;
+        changingYaoName = '';
+        yaoArr = [];
+        baguaDiv.innerHTML = '';
+        document.getElementById('guaName').textContent = '';
+        document.getElementById('changingYaoName').textContent = '';
+        
+        // 隐藏卜卦按钮
+        document.getElementById('startButton').style.display = 'none';
+        
+        changingYaoPosition = Math.floor(Math.random() * 6);
+        
+        getRandomHexagram();
+        interval = setInterval(function() {
+            getRandomHexagram()
+        }, 1000);
+        document.getElementById('explainButton').style.display = 'none';
+    }
   });
 
   
@@ -299,6 +307,8 @@
 // 添加变爻位置名称数组
 const yaoPositionNames = ["初", "二", "三", "四", "五", "上"];
 
+var buguanum = 0 ;
+
 function getGuaName() {
     console.info(yaoArr);
     var targetCode = yaoArr.join("");
@@ -325,25 +335,12 @@ function getGuaName() {
     
     // 显示卜卦和解卦按钮，并修改卜卦按钮文字
     document.getElementById('startButton').textContent = '再卜一卦';
+    buguanum++;
     document.getElementById('startButton').style.display = 'inline-block';
     document.getElementById('explainButton').style.display = 'inline-block';
     
     return guaName.name;
 }
-
-// 添加文心一言 API 访问令牌获取函数
-var url_prex = "http://portal.ngrok.wucheer.com.cn/";//放到github page需要https
-var access_token = null;
-
-// function getAccessToken() {
-
-//   var url = url_prex+"getBDToken";
-//     $.get(url, function(data) {
-//       console.info(data.access_token);
-//       access_token = data.access_token;
-//     });
-// }
-// getAccessToken();
 
 // 修改 explainButton 点击事件
 document.getElementById('explainButton').addEventListener('click', async function() {
@@ -363,13 +360,6 @@ document.getElementById('explainButton').addEventListener('click', async functio
   modal.style.display = "block";
 
   try {
-    // const accessToken = access_token;
-
-    // var data1 = {
-		// 	url:'https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat/yi_34b_chat?access_token=' + accessToken,
-		// 	content:`请解释易经中${guaName}卦的${changingYaoText}爻变的含义，用通俗易懂的语言，限制在2000字以内。`
-		// };
-
     var data1 = {
       "model":"glm-4-air-0111",
       "messages": [
