@@ -371,17 +371,22 @@ document.getElementById('explainButton').addEventListener('click', async functio
 		// };
 
     var data1 = {
-			url:'https://open.bigmodel.cn/api/paas/v4/chat/completions',
-			content:`${guaName} ${changingYaoText}`
+      "model":"glm-4-air-0111",
+      "messages": [
+                        {
+                                "role": "user",
+                                "content":  `${guaName} ${changingYaoText}`
+                        }
+                ]
 		};
-
-    console.info(url_prex+"quertGLMAI");
-    console.info(JSON.stringify(data1));
 		$.ajax({
-		  url: url_prex+"quertGLMAI",
+		  url: "https://open.bigmodel.cn/api/paas/v4/chat/completions",
 		  type: 'POST',
-		  //dataType: 'json',
-		  contentType:"application/json;charset=utf-8",
+		  contentType: "application/json;charset=utf-8",
+		  headers: {
+        'Content-Type': 'application/json;charset=utf-8',
+		    'Authorization': 'Bearer 1f0cc7d00b2f4c16b55c23eecc7afca4.NioIXaex3P9Kx2PW' // 替换为您的访问令牌
+		  },
 		  data: JSON.stringify(data1),
 		  success: function(response) {
 			  console.log(response);
