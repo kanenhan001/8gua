@@ -401,10 +401,6 @@ function getGuaName() {
     buguanum++;
     document.getElementById('startButton').style.display = 'inline-block';
     document.getElementById('explainButton').style.display = 'inline-block';
-
-    const guaNameShow = document.getElementById('guaName').textContent;
-    const changingYaoText = document.getElementById('changingYaoName').textContent;
-	  save2File(`${ques}`,`${guaNameShow} - ${changingYaoText}`);
     
     return guaName.name;
 }
