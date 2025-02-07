@@ -505,29 +505,29 @@ async function getOpenAIStream(data1) {
   //save2File("hello,world.","地天泰 初九");
   
   function save2File(_question,_result){
-    var url_prex = "http://82.156.210.116:3000/";
-	var url = url_prex+"insert8gua";
-	var data1 = {
-		username:"kanen",
-		question:_question,
-		result:_result,
-		create_date:new Date().getTime(),
-		actid:"1"
-	};
+    var url_prex = "https://www.hanmanyi.site/dev-api/";
+    var url = url_prex+"insert8gua";
+    var data1 = {
+      username:"kanen",
+      question:_question,
+      result:_result,
+      create_date:new Date().getTime(),
+      actid:"1"
+    };
 
-	$.ajax({
-	  url: url,
-	  type: 'POST',
-	  //dataType: 'json',
-	  contentType:"application/json;charset=utf-8",
-	  data: JSON.stringify(data1),
-	  success: function(response) {
-		  console.log(response);
-	  },
-	  error: function(jqXHR, textStatus, errorThrown) {
-		  console.log('错误：' + errorThrown);
-	  }
-	});
+    $.ajax({
+      url: url,
+      type: 'POST',
+      //dataType: 'json',
+      contentType:"application/json;charset=utf-8",
+      data: JSON.stringify(data1),
+      success: function(response) {
+        console.log(response);
+      },
+      error: function(jqXHR, textStatus, errorThrown) {
+        console.log('错误：' + errorThrown);
+      }
+    });
   }
 </script>
 </body>
