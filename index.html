@@ -166,6 +166,20 @@
   .close:hover {
     color: black;
   }
+
+  .disclaimer {
+    position: fixed;
+    bottom: 120px;  /* 调整位置在 footer 上方 */
+    left: 0;
+    width: 100%;
+    background-color: transparent;
+    text-align: center;
+    color: #888;
+    font-size: 12px;
+    padding: 10px 0;
+    z-index: 1000;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  }
 </style>
 </head>
 <body>
@@ -181,9 +195,10 @@
     <button id="explainButton">AI解卦</button>
   </div>
 </div>
-
 <div class="footer">
-  <p style="margin: 5px 0;">本系统由AI协助制作完成<br>如您有相关AI开发需求或者看不懂卦辞，<br>都可联系我，联系电话：<a href="tel:15033768387" style="color: #888;">15033768387</a>（深夜勿扰）</p>
+  <p style="margin: 5px 0;"><strong>免责声明</strong><br><br>本程序不向用户收取任何费用，仅作易经八卦学习之用<br/>
+    请您提高警惕，切勿上当受骗。<br/>
+    也请您勿将本程序用作非法用途，<br/>否则将追究您的法律责任。</p>
   <p style="margin: 5px 0;">© 2025 皮球爸爸 版权所有</p>
 </div>
 
