@@ -515,41 +515,44 @@ async function getOpenAIStream(data1) {
     }
   }
   
-  function save2File(_question,_result){
+  async function save2File(_question,_result){
     var url_prex = "https://www.hanmanyi.site/dev-api/";
     var url = url_prex+"insert8gua";
 
-    var city = getUserCity();
-    console.info(city);
-    var data1 = {
-      username:city,
-      question:_question,
-      result:_result,
-      create_date: new Date().toLocaleString('zh-CN', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false
-      }).replace(/\//g, '-'),
-      actid:"1"
-    };
+    try {
+      const city = await getUserCity(); // 等待异步操作完成
+      
+      var data1 = {
+        username: city || "未知城市", // 如果获取失败则使用默认值
+        question: _question,
+        result: _result,
+        create_date: new Date().toLocaleString('zh-CN', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false
+        }).replace(/\//g, '-'),
+        actid: "1"
+      };
 
-    $.ajax({
-      url: url,
-      type: 'POST',
-      //dataType: 'json',
-      contentType:"application/json;charset=utf-8",
-      data: JSON.stringify(data1),
-      success: function(response) {
-        console.log(response);
-      },
-      error: function(jqXHR, textStatus, errorThrown) {
-        console.log('错误：' + errorThrown);
-      }
-    });
+      $.ajax({
+        url: url,
+        type: 'POST',
+        contentType: "application/json;charset=utf-8",
+        data: JSON.stringify(data1),
+        success: function(response) {
+          console.log(response);
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+          console.log('错误：' + errorThrown);
+        }
+      });
+    } catch (error) {
+      console.error('保存数据时出错:', error);
+    }
   }
 </script>
 </body>
