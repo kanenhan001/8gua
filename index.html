@@ -502,13 +502,27 @@ async function getOpenAIStream(data1) {
       }
     }
   }
-  //save2File("hello,world.","地天泰 初九");
+
+  // 使用免费的 IP 地理位置 API
+  async function getUserCity() {
+    try {
+      const response = await fetch('https://ipapi.co/json/');
+      const data = await response.json();
+      return data.city; // 返回城市名称
+    } catch (error) {
+      console.error('获取城市失败:', error);
+      return "";
+    }
+  }
   
   function save2File(_question,_result){
     var url_prex = "https://www.hanmanyi.site/dev-api/";
     var url = url_prex+"insert8gua";
+
+    var city = getUserCity();
+
     var data1 = {
-      username:"kanen",
+      username:city,
       question:_question,
       result:_result,
       create_date: new Date().toLocaleString('zh-CN', {
