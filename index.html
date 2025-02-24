@@ -270,7 +270,7 @@
         confirmButtonText: btnName1,
         cancelButtonText: btnName2,
         input: 'textarea',  // 新增：添加文本框
-        inputPlaceholder: '在这里输入您要测算的内容。\r\r\n友情提示：相同的问题不要提问多次，信则卜，不信则不卜。\r\r\n可以问吉凶、好坏、是否合适等，不要问方法，比如\'今年生意亏了，明年我该怎么办?\'，您可以把问题转换一下，改为\'今年做餐饮生意亏了，明年改做茶饮生意怎么样？\''  // 新增：文本框提示
+        inputPlaceholder: '友情提示：相同的问题不要提问多次，信则卜，不信则不卜。\r\r\n可以问吉凶、好坏、是否合适等，不要问方法，比如\'今年生意亏了，明年我该怎么办?\'，您可以把问题转换一下，改为\'今年做餐饮生意亏了，明年改做茶饮生意怎么样？\''  // 新增：文本框提示
     }).then((result) => {
         if (result.isConfirmed) {
             // 检查用户输入是否为空
@@ -362,10 +362,14 @@
       Swal.fire({
         imageUrl: imgData, // 显示生成的图片
         imageWidth: 300,   // 设置预览图宽度
+        imageHeight: 400,  // 设置预览图高度
         imageAlt: '卜卦结果预览',
         title: '保存成功',
         text: '长按图片可保存到相册',
-        confirmButtonText: '确定'
+        confirmButtonText: '确定',
+        customClass: {
+          popup: 'swal2-popup-custom'  // 添加自定义类
+        }
       });
     }).catch(err => {
       // 发生错误时恢复原始样式和显示保存按钮
