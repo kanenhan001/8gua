@@ -208,18 +208,6 @@
   <div class="button-container">
     <button id="startButton">卜一卦</button>
     <button id="explainButton">AI解卦</button>
-    <br/>
-    <button id="saveToGalleryButton" class="button is-info">保存到相册</button>
-  <script>
-    document.getElementById('saveToGalleryButton').addEventListener('click', function() {
-      html2canvas(document.body).then(function(canvas) {
-        const link = document.createElement('a');
-        link.href = canvas.toDataURL('image/png');
-        link.download = 'screenshot.png';
-        link.click();
-      });
-    });
-  </script>
   </div>
 </div>
 <div class="footer">
@@ -282,7 +270,7 @@
         confirmButtonText: btnName1,
         cancelButtonText: btnName2,
         input: 'textarea',  // 新增：添加文本框
-        inputPlaceholder: '在这里输入您要测算的内容。\r\r\n友情提示：相同的问题不要提问多次，信则卜，不信则不卜。\r\r\n可以问吉凶、好坏、是否合适等，不要问方法，比如‘今年生意亏了，明年我该怎么办?’，您可以把问题转换一下，改为‘今年做餐饮生意亏了，明年改做茶饮生意怎么样？’'  // 新增：文本框提示
+        inputPlaceholder: '在这里输入您要测算的内容。\r\r\n友情提示：相同的问题不要提问多次，信则卜，不信则不卜。\r\r\n可以问吉凶、好坏、是否合适等，不要问方法，比如\'今年生意亏了，明年我该怎么办?\'，您可以把问题转换一下，改为\'今年做餐饮生意亏了，明年改做茶饮生意怎么样？\''  // 新增：文本框提示
     }).then((result) => {
         if (result.isConfirmed) {
             // 检查用户输入是否为空
@@ -317,6 +305,48 @@
         }
     });
   });
+
+  function downloadPic(){
+    // 获取要截图的div
+    const element = document.getElementById('modal-content');
+    
+    // html2canvas配置
+    html2canvas(element, {
+      // 设置背景色
+      backgroundColor: '#ffffff',
+      // 提升清晰度
+      scale: 2,
+      // 是否使用CSS变换
+      useCORS: true
+    }).then(canvas => {
+      // 将canvas转为图片
+      const imgData = canvas.toDataURL('image/png');
+      
+      // 创建下载链接
+      const link = document.createElement('a');
+      link.download = '卜卦结果.png';
+      link.href = imgData;
+      
+      // 触发下载
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // 提示用户
+      Swal.fire({
+        icon: 'success',
+        title: '保存成功',
+        text: '卜卦结果已保存到您的相册'
+      });
+    }).catch(err => {
+      console.error('保存图片失败:', err);
+      Swal.fire({
+        icon: 'error',
+        title: '保存失败',
+        text: '保存图片时出现错误,请稍后重试'
+      });
+    });
+  }
   
   function getRandomHexagram() {
     if (count < 6) {
@@ -468,6 +498,13 @@ document.getElementById('explainButton').addEventListener('click', async functio
     <p>变爻：${changingYaoText}</p>
     <p>您的问题：${ques}</p>
     <p id='output'>正在AI解挂,请稍后...</p>
+    <div style="text-align: center; margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;">
+      <img src="qrcode.png" alt="小程序二维码" style="width: 80px; height: 80px; margin-bottom: 10px;">
+      <br>
+      <button onclick="downloadPic();" class="button is-info">
+        保存到相册
+      </button>
+    </div>
   `;
   
   modal.style.display = "block";
@@ -542,6 +579,9 @@ async function getOpenAIStream(data1) {
           });
       } else {
           done = readerDone; // 流结束
+
+          // 保存到相册
+          
       }
     }
   }
