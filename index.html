@@ -233,7 +233,7 @@
 
 <div id="explainModal" class="modal">
   <div id="modal-content" class="modal-content" style="max-height: 85vh; overflow-y: auto;">
-    <span class="close">&times;</span>
+    <span class="close" id="closeModal">&times;</span>
     <h2 id="modalTitle"></h2>
     <div id="modalContent"></div>
   </div>
@@ -322,6 +322,10 @@
     if(saveButton) {
       saveButton.style.display = 'none';
     }
+
+    const closeModalButton = element.querySelector('.close');
+    closeModalButton.style.display = 'none';
+
     
     // 临时移除高度限制和滚动
     element.style.maxHeight = 'none';
@@ -359,6 +363,10 @@
       if(saveButton) {
         saveButton.style.display = 'inline-flex';
       }
+      if(closeModalButton) {
+        closeModalButton.style.display = 'block';
+      }
+
       //预览
       Swal.fire({
         imageUrl: imgData,
