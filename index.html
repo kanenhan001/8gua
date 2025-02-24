@@ -310,14 +310,24 @@
     // 获取要截图的div
     const element = document.getElementById('modal-content');
     
+    // 保存原始样式
+    const originalStyle = {
+      maxHeight: element.style.maxHeight,
+      overflowY: element.style.overflowY
+    };
+    
+    // 临时移除高度限制和滚动
+    element.style.maxHeight = 'none';
+    element.style.overflowY = 'visible';
+    
     // html2canvas配置
     html2canvas(element, {
-      // 设置背景色
       backgroundColor: '#ffffff',
-      // 提升清晰度
       scale: 2,
-      // 是否使用CSS变换
-      useCORS: true
+      useCORS: true,
+      // 确保捕获完整高度
+      height: element.scrollHeight,
+      windowHeight: element.scrollHeight
     }).then(canvas => {
       // 将canvas转为图片
       const imgData = canvas.toDataURL('image/png');
@@ -332,6 +342,10 @@
       link.click();
       document.body.removeChild(link);
       
+      // 恢复原始样式
+      element.style.maxHeight = originalStyle.maxHeight;
+      element.style.overflowY = originalStyle.overflowY;
+      
       // 提示用户
       Swal.fire({
         icon: 'success',
@@ -339,6 +353,10 @@
         text: '卜卦结果已保存到您的相册'
       });
     }).catch(err => {
+      // 发生错误时也要恢复原始样式
+      element.style.maxHeight = originalStyle.maxHeight;
+      element.style.overflowY = originalStyle.overflowY;
+      
       console.error('保存图片失败:', err);
       Swal.fire({
         icon: 'error',
