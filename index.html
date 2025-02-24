@@ -231,7 +231,7 @@
 </div>
 
 <div id="explainModal" class="modal">
-  <div id="modal-content" class="modal-content" style="max-height: 90vh; overflow-y: auto;">
+  <div id="modal-content" class="modal-content" style="max-height: 85vh; overflow-y: auto;">
     <span class="close">&times;</span>
     <h2 id="modalTitle"></h2>
     <div id="modalContent"></div>
@@ -335,8 +335,18 @@
     }).then(canvas => {
       const imgData = canvas.toDataURL('image/png');
       const link = document.createElement('a');
-      link.download = '卜卦结果.png';
-      link.href = imgData;
+      const now = new Date();
+      const timestamp = now.toLocaleString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      }).replace(/[\/\s:]/g, '');
+      
+      link.download = `卜卦结果_${timestamp}.png`;
       
       document.body.appendChild(link);
       link.click();
@@ -548,7 +558,7 @@ document.getElementById('explainButton').addEventListener('click', async functio
           max-width: 300px;
         ">
           <div style="color: #333; font-weight: 500; margin-bottom: 8px;">扫码关注小程序</div>
-          理性看待解挂内容，请勿用于非法用途。
+          理性看待解挂内容，请勿用于非法用途。Tips:程序打不开时可尝试多刷新几次。
         </div>
       </div>
 
