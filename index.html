@@ -360,15 +360,20 @@
       }
       
       Swal.fire({
-        imageUrl: imgData, // 显示生成的图片
-        imageWidth: 300,   // 设置预览图宽度
-        imageHeight: 400,  // 设置预览图高度
+        imageUrl: imgData,
+        imageHeight: 400,
         imageAlt: '卜卦结果预览',
-        title: '保存成功',
-        text: '长按图片可保存到相册',
+        title: '',
+        text: '长按上方图片可保存到相册',
         confirmButtonText: '确定',
         customClass: {
-          popup: 'swal2-popup-custom'  // 添加自定义类
+          popup: 'swal2-popup-custom'
+        }
+      }).then((result) => {
+        if (result.isConfirmed) {
+          // 点击确定后关闭 explainModal
+          document.getElementById('explainModal').style.display = "none";
+          reload = false; // 停止流式请求
         }
       });
     }).catch(err => {
