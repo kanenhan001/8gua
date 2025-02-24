@@ -10,9 +10,7 @@
 <script type="text/javascript" src="jquery.min.js"></script>
 <script type="text/javascript" src="marked.min.js"></script>
 <script type="text/javascript" src="sweetalert2.min.js"></script>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-
+<script type="text/javascript" src="html2canvas.min.js"></script>
 <link href="bulma.min.css" rel="stylesheet">
 
 <style>
@@ -180,6 +178,23 @@
     z-index: 1000;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
   }
+
+  #saveToGalleryButton {
+    padding: 10px 20px;
+    font-size: 1.5em;
+    color: white;
+    background-color: #3298dc;  /* Bulma 的 is-info 颜色 */
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin-top: 20px;
+    margin-left: 10px;
+  }
+
+  #saveToGalleryButton:hover {
+    background-color: #2793da;  /* 稍深一点的蓝色用于悬停效果 */
+  }
 </style>
 </head>
 <body>
@@ -193,6 +208,18 @@
   <div class="button-container">
     <button id="startButton">卜一卦</button>
     <button id="explainButton">AI解卦</button>
+    <br/>
+    <button id="saveToGalleryButton" class="button is-info">保存到相册</button>
+  <script>
+    document.getElementById('saveToGalleryButton').addEventListener('click', function() {
+      html2canvas(document.body).then(function(canvas) {
+        const link = document.createElement('a');
+        link.href = canvas.toDataURL('image/png');
+        link.download = 'screenshot.png';
+        link.click();
+      });
+    });
+  </script>
   </div>
 </div>
 <div class="footer">
