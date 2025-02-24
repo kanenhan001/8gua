@@ -140,7 +140,7 @@
 
   .modal-content {
     background-color: #fefefe;
-    margin: 15% auto;
+    margin: 5% auto;
     padding: 20px;
     border: 1px solid #888;
     width: 80%;
@@ -231,7 +231,7 @@
 </div>
 
 <div id="explainModal" class="modal">
-  <div id="modal-content" class="modal-content" style="max-height: 80vh; overflow-y: auto;">
+  <div id="modal-content" class="modal-content" style="max-height: 90vh; overflow-y: auto;">
     <span class="close">&times;</span>
     <h2 id="modalTitle"></h2>
     <div id="modalContent"></div>
@@ -307,7 +307,6 @@
   });
 
   function downloadPic(){
-    // 获取要截图的div
     const element = document.getElementById('modal-content');
     
     // 保存原始样式
@@ -316,46 +315,52 @@
       overflowY: element.style.overflowY
     };
     
+    // 找到保存按钮
+    const saveButton = element.querySelector('.button.is-info');
+    // 临时隐藏保存按钮
+    if(saveButton) {
+      saveButton.style.display = 'none';
+    }
+    
     // 临时移除高度限制和滚动
     element.style.maxHeight = 'none';
     element.style.overflowY = 'visible';
     
-    // html2canvas配置
     html2canvas(element, {
-      backgroundColor: '#ffffff',
+      backgroundColor: '#ffffff', 
       scale: 2,
       useCORS: true,
-      // 确保捕获完整高度
       height: element.scrollHeight,
       windowHeight: element.scrollHeight
     }).then(canvas => {
-      // 将canvas转为图片
       const imgData = canvas.toDataURL('image/png');
-      
-      // 创建下载链接
       const link = document.createElement('a');
       link.download = '卜卦结果.png';
       link.href = imgData;
       
-      // 触发下载
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       
-      // 恢复原始样式
+      // 恢复原始样式和显示保存按钮
       element.style.maxHeight = originalStyle.maxHeight;
       element.style.overflowY = originalStyle.overflowY;
+      if(saveButton) {
+        saveButton.style.display = 'inline-flex';
+      }
       
-      // 提示用户
       Swal.fire({
         icon: 'success',
         title: '保存成功',
         text: '卜卦结果已保存到您的相册'
       });
     }).catch(err => {
-      // 发生错误时也要恢复原始样式
+      // 发生错误时恢复原始样式和显示保存按钮
       element.style.maxHeight = originalStyle.maxHeight;
       element.style.overflowY = originalStyle.overflowY;
+      if(saveButton) {
+        saveButton.style.display = 'inline-flex';
+      }
       
       console.error('保存图片失败:', err);
       Swal.fire({
@@ -516,11 +521,57 @@ document.getElementById('explainButton').addEventListener('click', async functio
     <p>变爻：${changingYaoText}</p>
     <p>您的问题：${ques}</p>
     <p id='output'>正在AI解挂,请稍后...</p>
-    <div style="text-align: center; margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;">
-      <img src="qrcode.png" alt="小程序二维码" style="width: 80px; height: 80px; margin-bottom: 10px;">
-      <br>
-      <button onclick="downloadPic();" class="button is-info">
-        保存到相册
+    <div style="text-align: center; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px;">
+      <!-- 二维码和提示文字容器 -->
+      <div style="
+        background: #eceef0;  /* 改为更深的背景色 */
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 15px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);  /* 稍微加深阴影 */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 25px;
+      ">
+        <img src="qrcode.png" alt="小程序二维码" style="
+          width: 100px;
+          height: 100px;
+          border-radius: 8px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        ">
+        <div style="
+          text-align: left;
+          color: #666;
+          font-size: 15px;
+          line-height: 1.6;
+          max-width: 300px;
+        ">
+          <div style="color: #333; font-weight: 500; margin-bottom: 8px;">扫码关注小程序</div>
+          理性看待解挂内容，请勿用于非法用途。
+        </div>
+      </div>
+
+      <!-- 保存按钮 -->
+      <button onclick="downloadPic();" class="button is-info" style="
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 24px;
+        font-size: 16px;
+        font-weight: 500;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #3298dc, #2793da);
+        border: none;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(50, 152, 220, 0.3);
+        cursor: pointer;
+      ">
+        <svg style="width: 22px; height: 22px;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 16L12 8M12 16L9 13M12 16L15 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M3 15V16C3 18.2091 4.79086 20 7 20H17C19.2091 20 21 18.2091 21 16V15M3 9V8C3 5.79086 4.79086 4 7 4H17C19.2091 4 21 5.79086 21 8V9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        保存卦象解释到相册
       </button>
     </div>
   `;
