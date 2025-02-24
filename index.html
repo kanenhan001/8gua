@@ -360,9 +360,12 @@
       }
       
       Swal.fire({
-        icon: 'success',
+        imageUrl: imgData, // 显示生成的图片
+        imageWidth: 300,   // 设置预览图宽度
+        imageAlt: '卜卦结果预览',
         title: '保存成功',
-        text: '卜卦结果已保存到您的相册'
+        text: '长按图片可保存到相册',
+        confirmButtonText: '确定'
       });
     }).catch(err => {
       // 发生错误时恢复原始样式和显示保存按钮
