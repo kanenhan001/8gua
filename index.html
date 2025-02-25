@@ -68,8 +68,13 @@
     color: #888;
     font-size: 12px;
     padding: 10px 0;
-    z-index: 1000;
+    z-index: 10;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    pointer-events: none;
+  }
+
+  .footer p {
+    pointer-events: auto;
   }
 
   #bagua {
@@ -212,9 +217,8 @@
   </div>
 </div>
 <div class="footer">
-  <p style="margin: 5px 0;"><strong>免责声明</strong><br><br>本程序不向用户收取任何费用，仅作易经八卦学习之用<br/>
-    请您提高警惕，切勿上当受骗。<br/>
-    也请您勿将本程序用作非法用途，<br/>否则将追究您的法律责任。</p>
+  <p style="margin: 5px 0;">本程序仅作易经八卦学习之用，不向用户收取任何费用，<br/>
+    请勿将本程序用于非法用途<br/>
   <p style="margin: 5px 0;">© 2025 皮球爸爸 版权所有</p>
 </div>
 
@@ -564,7 +568,7 @@ document.getElementById('explainButton').addEventListener('click', async functio
     <div style="text-align: center; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px;">
       <!-- 二维码和提示文字容器 -->
       <div id="qrcode-container" style="
-        display:none;
+        display:none !important;
         background: #eceef0;  /* 改为更深的背景色 */
         border-radius: 12px;
         padding: 20px;
@@ -612,7 +616,7 @@ document.getElementById('explainButton').addEventListener('click', async functio
           <path d="M12 16L12 8M12 16L9 13M12 16L15 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           <path d="M3 15V16C3 18.2091 4.79086 20 7 20H17C19.2091 20 21 18.2091 21 16V15M3 9V8C3 5.79086 4.79086 4 7 4H17C19.2091 4 21 5.79086 21 8V9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
         </svg>
-        保存卦象解释到相册
+        保存到相册
       </button>
     </div>
   `;
