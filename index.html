@@ -323,10 +323,14 @@
       saveButton.style.display = 'none';
     }
 
+    // 临时隐藏关闭按钮
     const closeModalButton = element.querySelector('.close');
     closeModalButton.style.display = 'none';
 
-    
+    // 临时显示二维码容器
+    const qrcodeContainer = element.querySelector('#qrcode-container');
+    qrcodeContainer.style.display = 'flex';
+
     // 临时移除高度限制和滚动
     element.style.maxHeight = 'none';
     element.style.overflowY = 'visible';
@@ -363,8 +367,14 @@
       if(saveButton) {
         saveButton.style.display = 'inline-flex';
       }
+      // 恢复关闭按钮
       if(closeModalButton) {
         closeModalButton.style.display = 'block';
+      }
+
+      // 恢复二维码容器
+      if(qrcodeContainer) {
+        qrcodeContainer.style.display = 'none';
       }
 
       //预览
@@ -553,7 +563,8 @@ document.getElementById('explainButton').addEventListener('click', async functio
     <p id='output'>正在AI解挂,请稍后...</p>
     <div style="text-align: center; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px;">
       <!-- 二维码和提示文字容器 -->
-      <div style="
+      <div id="qrcode-container" style="
+        display:none;
         background: #eceef0;  /* 改为更深的背景色 */
         border-radius: 12px;
         padding: 20px;
