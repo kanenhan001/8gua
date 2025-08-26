@@ -211,9 +211,23 @@
   </div>
 <div class="container">
   <div id="bagua"></div>
+  <!-- 在卜一卦按钮下方添加单选按钮组 -->
   <div class="button-container">
     <button id="startButton">卜一卦</button>
     <button id="explainButton">AI解卦</button>
+  </div>
+  
+  <!-- 添加卜卦方式选择 -->
+  <div class="button-container" style="margin-top: 10px; justify-content: center;">
+    <label style="margin-right: 10px;">
+      <input type="radio" name="divinationMethod" value="single" checked> 单爻随机
+    </label>
+    <label style="margin-right: 10px;">
+      <input type="radio" name="divinationMethod" value="slotMachine" disabled> 走马灯
+    </label>
+    <label>
+      <input type="radio" name="divinationMethod" value="roulette" disabled> 八卦盘
+    </label>
   </div>
 </div>
 <div class="footer">
@@ -255,8 +269,13 @@
 
   var ques = "";//测算内容
 
-  document.getElementById('startButton').addEventListener('click', function() {
+  // 获取选中的卜卦方式
+  function getSelectedDivinationMethod() {
+    const selectedMethod = document.querySelector('input[name="divinationMethod"]:checked');
+    return selectedMethod ? selectedMethod.value : 'single';
+  }
 
+  document.getElementById('startButton').addEventListener('click', function() {
     var msg = "请输入您要测算的内容";
     var btnName1 = "想好了，卜吧";
     var btnName2 = "不卜了";
@@ -312,117 +331,30 @@
       
       changingYaoPosition = Math.floor(Math.random() * 6);
       
-      getRandomHexagram();
-      interval = setInterval(function() {
-          getRandomHexagram()
-      }, 1000);
+      // 根据选择的卜卦方式执行不同的函数
+      const method = getSelectedDivinationMethod();
+      
+      switch(method) {
+        case 'single':
+          // 原有的单爻随机方式
+          getRandomHexagram();
+          interval = setInterval(function() {
+              getRandomHexagram()
+          }, 1000);
+          break;
+        case 'slotMachine':
+          // 走马灯方式
+          doSlotMachineDivination();
+          break;
+        case 'roulette':
+          // 八卦盘方式
+          doRouletteDivination();
+          break;
+      }
+      
       document.getElementById('explainButton').style.display = 'none';
   }
 
-  function downloadPic(){
-    const element = document.getElementById('modal-content');
-    
-    // 保存原始样式
-    const originalStyle = {
-      maxHeight: element.style.maxHeight,
-      overflowY: element.style.overflowY
-    };
-    
-    // 找到保存按钮
-    const saveButton = element.querySelector('.button.is-info');
-    // 临时隐藏保存按钮
-    if(saveButton) {
-      saveButton.style.display = 'none';
-    }
-
-    // 临时隐藏关闭按钮
-    const closeModalButton = element.querySelector('.close');
-    closeModalButton.style.display = 'none';
-
-    // 临时显示二维码容器
-    const qrcodeContainer = element.querySelector('#qrcode-container');
-    qrcodeContainer.style.display = 'flex';
-
-    // 临时移除高度限制和滚动
-    element.style.maxHeight = 'none';
-    element.style.overflowY = 'visible';
-    
-    html2canvas(element, {
-      backgroundColor: '#ffffff', 
-      scale: 2,
-      useCORS: true,
-      height: element.scrollHeight,
-      windowHeight: element.scrollHeight
-    }).then(canvas => {
-      const imgData = canvas.toDataURL('image/png');
-      const link = document.createElement('a');
-      const now = new Date();
-      const timestamp = now.toLocaleString('zh-CN', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false
-      }).replace(/[\/\s:]/g, '');
-      
-      link.download = `卜卦结果_${timestamp}.png`;
-      
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      // 恢复原始样式和显示保存按钮
-      element.style.maxHeight = originalStyle.maxHeight;
-      element.style.overflowY = originalStyle.overflowY;
-      if(saveButton) {
-        saveButton.style.display = 'inline-flex';
-      }
-      // 恢复关闭按钮
-      if(closeModalButton) {
-        closeModalButton.style.display = 'block';
-      }
-
-      // 恢复二维码容器
-      if(qrcodeContainer) {
-        qrcodeContainer.style.display = 'none';
-      }
-
-      //预览
-      Swal.fire({
-        imageUrl: imgData,
-        imageHeight: 400,
-        imageAlt: '卜卦结果预览',
-        title: '',
-        text: '长按上方图片可保存到相册或发送给朋友',
-        confirmButtonText: '关闭',
-        customClass: {
-          popup: 'swal2-popup-custom'
-        }
-      }).then((result) => {
-        if (result.isConfirmed) {
-          // 点击确定后关闭 explainModal
-          document.getElementById('explainModal').style.display = "none";
-          reload = false; // 停止流式请求
-        }
-      });
-    }).catch(err => {
-      // 发生错误时恢复原始样式和显示保存按钮
-      element.style.maxHeight = originalStyle.maxHeight;
-      element.style.overflowY = originalStyle.overflowY;
-      if(saveButton) {
-        saveButton.style.display = 'inline-flex';
-      }
-      console.error('保存图片失败:', err);
-      Swal.fire({
-        icon: 'error',
-        title: '保存失败',
-        text: '保存图片时出现错误,请稍后重试'
-      });
-    });
-  }
-  
   function getRandomHexagram() {
     if (count < 6) {
         const randomIndex = Math.floor(Math.random() * hexagram.length);
@@ -446,6 +378,251 @@
         }
     }
   }
+  
+  // 走马灯方式卜卦
+    function doSlotMachineDivination() {
+    // 创建双轮盘容器
+    baguaDiv.innerHTML = `
+      <div style="position: relative; width: 300px; height: 300px; margin: 0 auto;">
+        <!-- 外圈（上三爻） -->
+        <div id="outerRing" style="
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          border: 2px solid #333;
+          border-radius: 50%;
+          animation: rotateOuter 4s linear infinite;
+        ">
+          <!-- 外圈卦象 -->
+          <div style="position: absolute; top: 0; left: 50%; transform: translateX(-50%);">${hexagram[Math.floor(Math.random() * hexagram.length)]}</div>
+          <div style="position: absolute; top: 10%; right: 10%; transform: rotate(30deg);">${hexagram[Math.floor(Math.random() * hexagram.length)]}</div>
+          <div style="position: absolute; top: 30%; right: 3%; transform: rotate(60deg);">${hexagram[Math.floor(Math.random() * hexagram.length)]}</div>
+          <div style="position: absolute; bottom: 30%; right: 3%; transform: rotate(120deg);">${hexagram[Math.floor(Math.random() * hexagram.length)]}</div>
+          <div style="position: absolute; bottom: 10%; right: 10%; transform: rotate(150deg);">${hexagram[Math.floor(Math.random() * hexagram.length)]}</div>
+          <div style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%) rotate(180deg);">${hexagram[Math.floor(Math.random() * hexagram.length)]}</div>
+          <div style="position: absolute; bottom: 10%; left: 10%; transform: rotate(210deg);">${hexagram[Math.floor(Math.random() * hexagram.length)]}</div>
+          <div style="position: absolute; bottom: 30%; left: 3%; transform: rotate(240deg);">${hexagram[Math.floor(Math.random() * hexagram.length)]}</div>
+          <div style="position: absolute; top: 30%; left: 3%; transform: rotate(300deg);">${hexagram[Math.floor(Math.random() * hexagram.length)]}</div>
+          <div style="position: absolute; top: 10%; left: 10%; transform: rotate(330deg);">${hexagram[Math.floor(Math.random() * hexagram.length)]}</div>
+        </div>
+        
+        <!-- 内圈（下三爻） -->
+        <div id="innerRing" style="
+          position: absolute;
+          width: 70%;
+          height: 70%;
+          top: 15%;
+          left: 15%;
+          border: 2px solid #333;
+          border-radius: 50%;
+          animation: rotateInner 4s linear infinite;
+        ">
+          <!-- 内圈卦象 -->
+          <div style="position: absolute; top: 0; left: 50%; transform: translateX(-50%);">${hexagram[Math.floor(Math.random() * hexagram.length)]}</div>
+          <div style="position: absolute; top: 15%; right: 15%; transform: rotate(45deg);">${hexagram[Math.floor(Math.random() * hexagram.length)]}</div>
+          <div style="position: absolute; bottom: 15%; right: 15%; transform: rotate(135deg);">${hexagram[Math.floor(Math.random() * hexagram.length)]}</div>
+          <div style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%) rotate(180deg);">${hexagram[Math.floor(Math.random() * hexagram.length)]}</div>
+          <div style="position: absolute; bottom: 15%; left: 15%; transform: rotate(225deg);">${hexagram[Math.floor(Math.random() * hexagram.length)]}</div>
+          <div style="position: absolute; top: 15%; left: 15%; transform: rotate(315deg);">${hexagram[Math.floor(Math.random() * hexagram.length)]}</div>
+        </div>
+        
+        <!-- 指针 -->
+        <div style="
+          position: absolute;
+          top: -10px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 4px;
+          height: 20px;
+          background-color: red;
+          z-index: 10;
+        "></div>
+      </div>
+    `;
+    
+    // 添加旋转动画样式
+    const style = document.createElement('style');
+    style.innerHTML = `
+      @keyframes rotateOuter {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+      
+      @keyframes rotateInner {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(-360deg); }
+      }
+    `;
+    document.head.appendChild(style);
+    
+    // 开始旋转并逐渐停止
+    setTimeout(() => {
+      const outerRing = document.getElementById('outerRing');
+      const innerRing = document.getElementById('innerRing');
+      
+      // 停止外圈旋转
+      setTimeout(() => {
+        outerRing.style.animation = 'none';
+        
+        // 保存外圈结果（上三爻）
+        yaoArr[3] = Math.floor(Math.random() * hexagram.length); // 四爻
+        yaoArr[4] = Math.floor(Math.random() * hexagram.length); // 五爻
+        yaoArr[5] = Math.floor(Math.random() * hexagram.length); // 上爻
+      }, 4000);
+      
+      // 停止内圈旋转
+      setTimeout(() => {
+        innerRing.style.animation = 'none';
+        
+        // 保存内圈结果（下三爻）
+        yaoArr[0] = Math.floor(Math.random() * hexagram.length); // 初爻
+        yaoArr[1] = Math.floor(Math.random() * hexagram.length); // 二爻
+        yaoArr[2] = Math.floor(Math.random() * hexagram.length); // 三爻
+        
+        // 显示最终卦象
+        setTimeout(() => {
+          displayFinalHexagram();
+        }, 500);
+      }, 6000);
+    }, 1000);
+  }
+  
+  // 八卦盘方式卜卦
+  function doRouletteDivination() {
+    // 创建双圆盘容器
+    baguaDiv.innerHTML = `
+      <div style="position: relative; width: 300px; height: 300px; margin: 0 auto;">
+        <!-- 外圈 -->
+        <div id="outerRing" style="
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          border: 2px solid #333;
+          border-radius: 50%;
+          animation: rotateOuter 10s linear infinite;
+        ">
+          <!-- 外圈爻 -->
+          <div style="position: absolute; top: 0; left: 50%; transform: translateX(-50%);">${hexagram[Math.floor(Math.random() * hexagram.length)]}</div>
+          <div style="position: absolute; top: 10%; right: 10%; transform: rotate(30deg);">${hexagram[Math.floor(Math.random() * hexagram.length)]}</div>
+          <div style="position: absolute; top: 30%; right: 3%; transform: rotate(60deg);">${hexagram[Math.floor(Math.random() * hexagram.length)]}</div>
+          <div style="position: absolute; bottom: 30%; right: 3%; transform: rotate(120deg);">${hexagram[Math.floor(Math.random() * hexagram.length)]}</div>
+          <div style="position: absolute; bottom: 10%; right: 10%; transform: rotate(150deg);">${hexagram[Math.floor(Math.random() * hexagram.length)]}</div>
+          <div style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%) rotate(180deg);">${hexagram[Math.floor(Math.random() * hexagram.length)]}</div>
+          <div style="position: absolute; bottom: 10%; left: 10%; transform: rotate(210deg);">${hexagram[Math.floor(Math.random() * hexagram.length)]}</div>
+          <div style="position: absolute; bottom: 30%; left: 3%; transform: rotate(240deg);">${hexagram[Math.floor(Math.random() * hexagram.length)]}</div>
+          <div style="position: absolute; top: 30%; left: 3%; transform: rotate(300deg);">${hexagram[Math.floor(Math.random() * hexagram.length)]}</div>
+          <div style="position: absolute; top: 10%; left: 10%; transform: rotate(330deg);">${hexagram[Math.floor(Math.random() * hexagram.length)]}</div>
+        </div>
+        
+        <!-- 内圈 -->
+        <div id="innerRing" style="
+          position: absolute;
+          width: 70%;
+          height: 70%;
+          top: 15%;
+          left: 15%;
+          border: 2px solid #333;
+          border-radius: 50%;
+          animation: rotateInner 7s linear infinite;
+        ">
+          <!-- 内圈爻 -->
+          <div style="position: absolute; top: 0; left: 50%; transform: translateX(-50%);">${hexagram[Math.floor(Math.random() * hexagram.length)]}</div>
+          <div style="position: absolute; top: 15%; right: 15%; transform: rotate(45deg);">${hexagram[Math.floor(Math.random() * hexagram.length)]}</div>
+          <div style="position: absolute; bottom: 15%; right: 15%; transform: rotate(135deg);">${hexagram[Math.floor(Math.random() * hexagram.length)]}</div>
+          <div style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%) rotate(180deg);">${hexagram[Math.floor(Math.random() * hexagram.length)]}</div>
+          <div style="position: absolute; bottom: 15%; left: 15%; transform: rotate(225deg);">${hexagram[Math.floor(Math.random() * hexagram.length)]}</div>
+          <div style="position: absolute; top: 15%; left: 15%; transform: rotate(315deg);">${hexagram[Math.floor(Math.random() * hexagram.length)]}</div>
+        </div>
+        
+        <!-- 指针 -->
+        <div style="
+          position: absolute;
+          top: -10px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 4px;
+          height: 20px;
+          background-color: red;
+          z-index: 10;
+        "></div>
+      </div>
+    `;
+    
+    // 添加旋转动画样式
+    const style = document.createElement('style');
+    style.innerHTML = `
+      @keyframes rotateOuter {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+      
+      @keyframes rotateInner {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(-360deg); }
+      }
+    `;
+    document.head.appendChild(style);
+    
+    // 开始旋转并逐渐停止
+    setTimeout(() => {
+      const outerRing = document.getElementById('outerRing');
+      const innerRing = document.getElementById('innerRing');
+      
+      // 停止外圈旋转
+      setTimeout(() => {
+        outerRing.style.animation = 'none';
+        
+        // 保存外圈结果（上三爻）
+        const outerYao = [];
+        for(let i = 0; i < 3; i++) {
+          outerYao.push(Math.floor(Math.random() * hexagram.length));
+        }
+        yaoArr[3] = outerYao[0]; // 上爻
+        yaoArr[4] = outerYao[1]; // 五爻
+        yaoArr[5] = outerYao[2]; // 四爻
+      }, 5000);
+      
+      // 停止内圈旋转
+      setTimeout(() => {
+        innerRing.style.animation = 'none';
+        
+        // 保存内圈结果（下三爻）
+        const innerYao = [];
+        for(let i = 0; i < 3; i++) {
+          innerYao.push(Math.floor(Math.random() * hexagram.length));
+        }
+        yaoArr[0] = innerYao[0]; // 初爻
+        yaoArr[1] = innerYao[1]; // 二爻
+        yaoArr[2] = innerYao[2]; // 三爻
+        
+        // 显示最终卦象
+        setTimeout(() => {
+          displayFinalHexagram();
+        }, 500);
+      }, 7000);
+    }, 1000);
+  }
+  
+  // 显示最终卦象
+  function displayFinalHexagram() {
+    let finalHexagram = '';
+    for(let i = 5; i >= 0; i--) {
+      finalHexagram += `<span data-yao="${i}">${hexagram[yaoArr[i]]}</span><br>`;
+    }
+    
+    baguaDiv.innerHTML = finalHexagram;
+    
+    const guaName = getGuaName();
+    
+    // 为变爻添加红色样式
+    setTimeout(() => {
+      const changingYaoElement = document.querySelector(`[data-yao="${changingYaoPosition}"]`);
+      if (changingYaoElement) {
+        changingYaoElement.classList.add('changing-yao');
+      }
+    }, 100);
+  }
+  
   //AI生成的这个卦象和机器编码对应关系 不太好，得手工调整
   const hexagrams =  [
   { name: "乾为天", code: "111111" },
@@ -601,7 +778,7 @@ document.getElementById('explainButton').addEventListener('click', async functio
           max-width: 300px;
         ">
           <div style="color: #333; font-weight: 500; margin-bottom: 8px;">扫码关注<strong>春风占卜</strong>小程序</div>
-          理性看待解挂内容，请勿用于非法用途。Tips:程序打不开时可尝试多刷新几次。
+          理性查看解挂内容，请勿用于非法用途。Tips:程序打不开时可尝试多刷新几次。
         </div>
       </div>
 
