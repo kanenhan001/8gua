@@ -288,28 +288,36 @@
             }
 
             ques = result.value;
-            // 用户点击了确定
-            count = 0;
-            changingYaoPosition = -1;
-            changingYaoName = '';
-            yaoArr = [];
-            baguaDiv.innerHTML = '';
-            document.getElementById('guaName').textContent = '';
-            document.getElementById('changingYaoName').textContent = '';
-            
-            // 隐藏卜卦按钮
-            document.getElementById('startButton').style.display = 'none';
-            
-            changingYaoPosition = Math.floor(Math.random() * 6);
-            
-            getRandomHexagram();
-            interval = setInterval(function() {
-                getRandomHexagram()
-            }, 1000);
-            document.getElementById('explainButton').style.display = 'none';
+           doBugua();
+        }else{
+          // ques = "今天买电脑吗？";
+          // doBugua();
         }
     });
   });
+
+
+  function doBugua(){
+     // 用户点击了确定
+      count = 0;
+      changingYaoPosition = -1;
+      changingYaoName = '';
+      yaoArr = [];
+      baguaDiv.innerHTML = '';
+      document.getElementById('guaName').textContent = '';
+      document.getElementById('changingYaoName').textContent = '';
+      
+      // 隐藏卜卦按钮
+      document.getElementById('startButton').style.display = 'none';
+      
+      changingYaoPosition = Math.floor(Math.random() * 6);
+      
+      getRandomHexagram();
+      interval = setInterval(function() {
+          getRandomHexagram()
+      }, 1000);
+      document.getElementById('explainButton').style.display = 'none';
+  }
 
   function downloadPic(){
     const element = document.getElementById('modal-content');
