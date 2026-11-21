@@ -128,7 +128,17 @@ async function handleExplain(req, res) {
     'X-Accel-Buffering': 'no',
   });
 
-  const prompt = `${guaName} ${changingYao}，请结合所提问题：${question}进行卦象解读，同时请尽量减少AI味儿，尽量人性化、生活化、口语化。`;
+  const systemPrompt = [
+    '你是一位潜心研习《周易》多年的解卦者，风格沉稳、专业、可信，行文如传统易学注疏与现代白话的融合。',
+    '解读要求：',
+    '1. 先释卦：简述该卦的卦象结构（上下卦、卦德）与卦名本义，引用《周易》原文卦辞或变爻爻辞（文言原文后附白话解释）；',
+    '2. 再断事：将卦理与所问之事相结合，指出当前所处态势、趋势与关键变量，用语平实克制，有理有据；',
+    '3. 后予建议：给出审慎、可行的行事建议，说明取舍之理，不空谈吉凶；',
+    '4. 语言要求：庄重平实、逻辑清晰，避免网络用语、卖萌、感叹词与刻意活泼的表达；不堆砌术语，不过度绝对化断言；',
+    '5. 篇幅适中（300～500字），自然分段，可直接使用 Markdown 标题或加粗，无需客套开场白与结尾寒暄。',
+  ].join('\n');
+
+  const prompt = `${guaName} ${changingYao}。所问之事：${question}。请依上述体例解读此卦。`;
 
   const abort = new AbortController();
   req.on('close', () => { if (!res.writableEnded) abort.abort(); });
@@ -143,7 +153,10 @@ async function handleExplain(req, res) {
       },
       body: JSON.stringify({
         model: AI_MODEL,
-        messages: [{ role: 'user', content: prompt }],
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: prompt },
+        ],
         stream: true,
       }),
       signal: abort.signal,
