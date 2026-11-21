@@ -1006,8 +1006,9 @@ document.querySelector('.close').addEventListener('click', function() {
 });
 
 // 流式获取 AI 返回结果（走自建后端代理，AI Key 保存在服务端）
-// 注：kanen.site 公网 DNS 暂未生效，先用服务器 IP + HTTP 80 直连（若日后页面部署在 HTTPS 下需换回域名，否则会被浏览器拦混合内容）
-const AI_API_BASE = 'http://82.156.210.116/8gua-api';
+// 页面部署在服务器 nginx 上时走同源相对路径（无跨域/混合内容问题）；
+// 本地 file:// 直接打开时回退到服务器 IP 直连
+const AI_API_BASE = (location.protocol === 'file:') ? 'http://82.156.210.116/8gua-api' : '/8gua-api';
 async function getOpenAIStream() {
     const guaName = document.getElementById('guaName').textContent;
     const changingYaoText = document.getElementById('changingYaoName').textContent;
