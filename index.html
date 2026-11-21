@@ -115,6 +115,8 @@
     color: red;
   }
 
+  /* 出结果后顶部指针隐藏由 JS 控制 */
+
   #explainButton {
     padding: 10px 20px;
     font-size: 1.5em;
@@ -220,13 +222,13 @@
   <!-- 添加卜卦方式选择 -->
   <div class="button-container" style="margin-top: 10px; justify-content: center;">
     <label style="margin-right: 10px;">
-      <input type="radio" name="divinationMethod" value="single" checked> 单爻随机
+      <input type="radio" name="divinationMethod" value="roulette" checked> 八卦盘
     </label>
     <label style="margin-right: 10px;">
-      <input type="radio" name="divinationMethod" value="slotMachine" disabled> 走马灯
+      <input type="radio" name="divinationMethod" value="single"> 单爻随机
     </label>
     <label>
-      <input type="radio" name="divinationMethod" value="roulette" disabled> 八卦盘
+      <input type="radio" name="divinationMethod" value="slotMachine" disabled> 走马灯
     </label>
   </div>
 </div>
@@ -322,18 +324,22 @@
       changingYaoPosition = -1;
       changingYaoName = '';
       yaoArr = [];
-      baguaDiv.innerHTML = '';
-      document.getElementById('guaName').textContent = '';
-      document.getElementById('changingYaoName').textContent = '';
-      
-      // 隐藏卜卦按钮
-      document.getElementById('startButton').style.display = 'none';
-      
-      changingYaoPosition = Math.floor(Math.random() * 6);
-      
+
       // 根据选择的卜卦方式执行不同的函数
       const method = getSelectedDivinationMethod();
-      
+
+      // 八卦盘复用页面上的盘面（首页常驻），其他方式清空重画
+      if (method !== 'roulette') {
+        baguaDiv.innerHTML = '';
+      }
+      document.getElementById('guaName').textContent = '';
+      document.getElementById('changingYaoName').textContent = '';
+
+      // 隐藏卜卦按钮
+      document.getElementById('startButton').style.display = 'none';
+
+      changingYaoPosition = Math.floor(Math.random() * 6);
+
       switch(method) {
         case 'single':
           // 原有的单爻随机方式
@@ -487,140 +493,303 @@
     }, 1000);
   }
   
-  // 八卦盘方式卜卦
-  function doRouletteDivination() {
-    // 创建双圆盘容器
-    baguaDiv.innerHTML = `
-      <div style="position: relative; width: 300px; height: 300px; margin: 0 auto;">
-        <!-- 外圈 -->
-        <div id="outerRing" style="
-          position: absolute;
-          width: 100%;
-          height: 100%;
-          border: 2px solid #333;
-          border-radius: 50%;
-          animation: rotateOuter 10s linear infinite;
-        ">
-          <!-- 外圈爻 -->
-          <div style="position: absolute; top: 0; left: 50%; transform: translateX(-50%);">${hexagram[Math.floor(Math.random() * hexagram.length)]}</div>
-          <div style="position: absolute; top: 10%; right: 10%; transform: rotate(30deg);">${hexagram[Math.floor(Math.random() * hexagram.length)]}</div>
-          <div style="position: absolute; top: 30%; right: 3%; transform: rotate(60deg);">${hexagram[Math.floor(Math.random() * hexagram.length)]}</div>
-          <div style="position: absolute; bottom: 30%; right: 3%; transform: rotate(120deg);">${hexagram[Math.floor(Math.random() * hexagram.length)]}</div>
-          <div style="position: absolute; bottom: 10%; right: 10%; transform: rotate(150deg);">${hexagram[Math.floor(Math.random() * hexagram.length)]}</div>
-          <div style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%) rotate(180deg);">${hexagram[Math.floor(Math.random() * hexagram.length)]}</div>
-          <div style="position: absolute; bottom: 10%; left: 10%; transform: rotate(210deg);">${hexagram[Math.floor(Math.random() * hexagram.length)]}</div>
-          <div style="position: absolute; bottom: 30%; left: 3%; transform: rotate(240deg);">${hexagram[Math.floor(Math.random() * hexagram.length)]}</div>
-          <div style="position: absolute; top: 30%; left: 3%; transform: rotate(300deg);">${hexagram[Math.floor(Math.random() * hexagram.length)]}</div>
-          <div style="position: absolute; top: 10%; left: 10%; transform: rotate(330deg);">${hexagram[Math.floor(Math.random() * hexagram.length)]}</div>
-        </div>
-        
-        <!-- 内圈 -->
-        <div id="innerRing" style="
-          position: absolute;
-          width: 70%;
-          height: 70%;
-          top: 15%;
-          left: 15%;
-          border: 2px solid #333;
-          border-radius: 50%;
-          animation: rotateInner 7s linear infinite;
-        ">
-          <!-- 内圈爻 -->
-          <div style="position: absolute; top: 0; left: 50%; transform: translateX(-50%);">${hexagram[Math.floor(Math.random() * hexagram.length)]}</div>
-          <div style="position: absolute; top: 15%; right: 15%; transform: rotate(45deg);">${hexagram[Math.floor(Math.random() * hexagram.length)]}</div>
-          <div style="position: absolute; bottom: 15%; right: 15%; transform: rotate(135deg);">${hexagram[Math.floor(Math.random() * hexagram.length)]}</div>
-          <div style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%) rotate(180deg);">${hexagram[Math.floor(Math.random() * hexagram.length)]}</div>
-          <div style="position: absolute; bottom: 15%; left: 15%; transform: rotate(225deg);">${hexagram[Math.floor(Math.random() * hexagram.length)]}</div>
-          <div style="position: absolute; top: 15%; left: 15%; transform: rotate(315deg);">${hexagram[Math.floor(Math.random() * hexagram.length)]}</div>
-        </div>
-        
-        <!-- 指针 -->
-        <div style="
-          position: absolute;
-          top: -10px;
-          left: 50%;
-          transform: translateX(-50%);
-          width: 4px;
-          height: 20px;
-          background-color: red;
-          z-index: 10;
-        "></div>
-      </div>
-    `;
-    
-    // 添加旋转动画样式
-    const style = document.createElement('style');
-    style.innerHTML = `
-      @keyframes rotateOuter {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
+  // 八卦盘方式卜卦（双环转盘：内环下卦顺时针，外环上卦逆时针，合成64卦）
+  const trigramList = [
+    { name: '乾', nature: '天', code: '111' },
+    { name: '兑', nature: '泽', code: '110' },
+    { name: '离', nature: '火', code: '101' },
+    { name: '震', nature: '雷', code: '100' },
+    { name: '巽', nature: '风', code: '011' },
+    { name: '坎', nature: '水', code: '010' },
+    { name: '艮', nature: '山', code: '001' },
+    { name: '坤', nature: '地', code: '000' },
+  ];
+
+  // ===== 八卦盘几何参数（viewBox 400×400，圆心 200,200）=====
+  const RC = 200;            // 圆心坐标
+  const R_DISC = 194;        // 外盘半径
+  const R_INNER_DISC = 120;  // 内盘半径
+  const R_CENTER = 46;       // 盘心白圈半径
+  // 外环（上卦）：加厚，卦符与卦名都完整落在扇区内
+  const OUTER = { band: [120, 192], glyphR: 165, nameR: 127, bw: 40, bh: 6.5, gap: 5, font: 16 };
+  // 内环（下卦）
+  const INNER = { band: [52, 118], glyphR: 90, nameR: 60, bw: 34, bh: 5.5, gap: 4.5, font: 14 };
+
+  // 绘制三爻卦符（三横），中心在 (cx, cy)。code[0] 为该卦初爻（最下面一横）
+  function trigramGlyphSVG(code, cx, cy, color, bw, bh, gap) {
+    let s = '';
+    for (let row = 0; row < 3; row++) {
+      const bit = code[2 - row]; // 从上往下画：先画上爻
+      const y = cy - (3 * bh + 2 * gap) / 2 + row * (bh + gap);
+      if (bit === '1') {
+        s += `<rect x="${cx - bw / 2}" y="${y}" width="${bw}" height="${bh}" rx="2" fill="${color}"/>`;
+      } else {
+        const half = (bw - gap) / 2;
+        s += `<rect x="${cx - bw / 2}" y="${y}" width="${half}" height="${bh}" rx="2" fill="${color}"/>`;
+        s += `<rect x="${cx + bw / 2 - half}" y="${y}" width="${half}" height="${bh}" rx="2" fill="${color}"/>`;
       }
-      
-      @keyframes rotateInner {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(-360deg); }
-      }
-    `;
-    document.head.appendChild(style);
-    
-    // 开始旋转并逐渐停止
-    setTimeout(() => {
-      const outerRing = document.getElementById('outerRing');
-      const innerRing = document.getElementById('innerRing');
-      
-      // 停止外圈旋转
-      setTimeout(() => {
-        outerRing.style.animation = 'none';
-        
-        // 保存外圈结果（上三爻）
-        const outerYao = [];
-        for(let i = 0; i < 3; i++) {
-          outerYao.push(Math.floor(Math.random() * hexagram.length));
-        }
-        yaoArr[3] = outerYao[0]; // 上爻
-        yaoArr[4] = outerYao[1]; // 五爻
-        yaoArr[5] = outerYao[2]; // 四爻
-      }, 5000);
-      
-      // 停止内圈旋转
-      setTimeout(() => {
-        innerRing.style.animation = 'none';
-        
-        // 保存内圈结果（下三爻）
-        const innerYao = [];
-        for(let i = 0; i < 3; i++) {
-          innerYao.push(Math.floor(Math.random() * hexagram.length));
-        }
-        yaoArr[0] = innerYao[0]; // 初爻
-        yaoArr[1] = innerYao[1]; // 二爻
-        yaoArr[2] = innerYao[2]; // 三爻
-        
-        // 显示最终卦象
-        setTimeout(() => {
-          displayFinalHexagram();
-        }, 500);
-      }, 7000);
-    }, 1000);
+    }
+    return s;
   }
-  
-  // 显示最终卦象
+
+  // 构建一个可旋转的圆环转子（8 个卦象扇区）
+  function buildRotorSVG(id, ring, color) {
+    let sectors = '';
+    for (let i = 0; i < 8; i++) {
+      const t = trigramList[i];
+      sectors += `
+        <g transform="rotate(${i * 45} ${RC} ${RC})">
+          ${trigramGlyphSVG(t.code, RC, RC - ring.glyphR, color, ring.bw, ring.bh, ring.gap)}
+          <text x="${RC}" y="${RC - ring.nameR}" text-anchor="middle" font-size="${ring.font}" font-weight="bold" fill="#8a6d3b">${t.nature}</text>
+        </g>`;
+    }
+    return `<g id="${id}">${sectors}</g>`;
+  }
+
+  // 顶部高亮框：标出最上方这对上下卦（它们组成了最终卦）
+  // 框是静止的（不随环旋转），始终罩住 12 点方向的扇区
+  function topHighlightSVG() {
+    const a1 = -112.5, a2 = -67.5; // 顶部扇区左右边界（与分隔线对齐）
+    const col = '#c0392b';
+    const pt = (r, a) => `${(RC + r * Math.cos(a * Math.PI / 180)).toFixed(2)},${(RC + r * Math.sin(a * Math.PI / 180)).toFixed(2)}`;
+    // 环形扇区路径（内半径 rIn 到外半径 rOut）
+    const band = (rIn, rOut) =>
+      `M${pt(rOut, a1)} A${rOut},${rOut} 0 0 1 ${pt(rOut, a2)}` +
+      ` L${pt(rIn, a2)} A${rIn},${rIn} 0 0 0 ${pt(rIn, a1)} Z`;
+
+    let s = `<g id="topHighlight" pointer-events="none">`;
+    s += `<defs><filter id="hlGlow" x="-40%" y="-40%" width="180%" height="180%">
+        <feDropShadow dx="0" dy="0" stdDeviation="2.5" flood-color="${col}" flood-opacity="0.4"/>
+      </filter></defs>`;
+    // 外环（上卦）
+    s += `<path d="${band(OUTER.band[0] + 2, OUTER.band[1] - 2)}" fill="rgba(192,57,43,0.06)" stroke="${col}" stroke-width="2" stroke-linejoin="round" filter="url(#hlGlow)"/>`;
+    // 内环（下卦）
+    s += `<path d="${band(INNER.band[0] + 2, INNER.band[1] - 2)}" fill="rgba(192,57,43,0.06)" stroke="${col}" stroke-width="2" stroke-linejoin="round"/>`;
+    s += `</g>`;
+    return s;
+  }
+
+  // 构建八卦盘整体 SVG
+  function buildRouletteSVG() {
+    const stroke = '#5a4632';
+    let svg = `<svg id="rouletteSvg" width="400" height="400" viewBox="0 0 400 400" style="max-width:100%;">`;
+    // 外盘底
+    svg += `<circle cx="${RC}" cy="${RC}" r="${R_DISC}" fill="rgba(255,252,242,0.92)" stroke="${stroke}" stroke-width="3"/>`;
+    // 外环分隔线
+    for (let i = 0; i < 8; i++) {
+      const a = (i * 45 + 22.5 - 90) * Math.PI / 180;
+      const x1 = RC + R_INNER_DISC * Math.cos(a), y1 = RC + R_INNER_DISC * Math.sin(a);
+      const x2 = RC + (R_DISC - 2) * Math.cos(a), y2 = RC + (R_DISC - 2) * Math.sin(a);
+      svg += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#c9b98f" stroke-width="1"/>`;
+    }
+    // 内盘底（盖住外盘中部）
+    svg += `<circle cx="${RC}" cy="${RC}" r="${R_INNER_DISC}" fill="rgba(255,252,242,0.95)" stroke="${stroke}" stroke-width="2"/>`;
+    // 内环分隔线
+    for (let i = 0; i < 8; i++) {
+      const a = (i * 45 + 22.5 - 90) * Math.PI / 180;
+      const x1 = RC + INNER.band[0] * Math.cos(a), y1 = RC + INNER.band[0] * Math.sin(a);
+      const x2 = RC + (R_INNER_DISC - 2) * Math.cos(a), y2 = RC + (R_INNER_DISC - 2) * Math.sin(a);
+      svg += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#c9b98f" stroke-width="1"/>`;
+    }
+    // 转子（外环=上卦，内环=下卦）
+    svg += buildRotorSVG('outerRotor', OUTER, '#333');
+    svg += buildRotorSVG('innerRotor', INNER, '#333');
+    // 顶部高亮框：罩住最上方这对上下卦（组成最终卦）
+    svg += topHighlightSVG();
+    // 中央：实时卦象（随双环转动实时拼合更新）
+    svg += `<circle cx="${RC}" cy="${RC}" r="${R_CENTER}" fill="#fff8e7" stroke="${stroke}" stroke-width="2"/>`;
+    svg += `<g id="centerHex"></g>`;
+    svg += `</svg>`;
+    return svg;
+  }
+
+  // 用 requestAnimationFrame 驱动转子旋转（缓动减速，可精确停在指定角度）
+  function animateRotor(el, from, target, duration, onUpdate, onDone) {
+    const start = performance.now();
+    function frame(now) {
+      const t = Math.min(1, (now - start) / duration);
+      const ease = 1 - Math.pow(1 - t, 4); // 四次方缓出，先快后慢
+      const ang = from + (target - from) * ease;
+      el.setAttribute('transform', `rotate(${ang} ${RC} ${RC})`);
+      if (onUpdate) onUpdate(ang);
+      if (t < 1) {
+        requestAnimationFrame(frame);
+      } else if (onDone) {
+        onDone();
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+
+  // 双环当前角度（首页空转与正式旋转之间无缝衔接）
+  let rouletteToken = 0;
+  const rouletteState = { inner: 0, outer: 0 };
+
+  // 首页常驻八卦盘：缓慢空转，盘心实时卦象随之变化
+  function startRouletteIdle() {
+    const token = ++rouletteToken;
+    baguaDiv.innerHTML = buildRouletteSVG() +
+      `<div id="rouletteReadout" style="font-size:14px;color:#5a4632;margin-top:6px;text-shadow:1px 1px 2px rgba(255,255,255,0.8);">静心凝神，点击「卜一卦」开始</div>`;
+
+    const innerRotor = document.getElementById('innerRotor');
+    const outerRotor = document.getElementById('outerRotor');
+    let lastKey = -1;
+    let last = performance.now();
+
+    function tick(now) {
+      if (token !== rouletteToken || !innerRotor || !innerRotor.isConnected) return; // 正式占卜接管或盘面被移除
+      const dt = Math.min(0.1, (now - last) / 1000);
+      last = now;
+      rouletteState.inner = (rouletteState.inner + 10 * dt) % 360;  // 缓慢顺时针
+      rouletteState.outer = (rouletteState.outer - 7 * dt) % 360;   // 缓慢逆时针
+      innerRotor.setAttribute('transform', `rotate(${rouletteState.inner} ${RC} ${RC})`);
+      outerRotor.setAttribute('transform', `rotate(${rouletteState.outer} ${RC} ${RC})`);
+
+      const kL = ((Math.round(-rouletteState.inner / 45) % 8) + 8) % 8;
+      const kU = ((Math.round(-rouletteState.outer / 45) % 8) + 8) % 8;
+      const key = kL * 8 + kU;
+      if (key !== lastKey) {
+        lastKey = key;
+        updateCenterHex(kL, kU, -1);
+      }
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  function doRouletteDivination() {
+    rouletteToken++; // 停掉首页空转
+
+    // 复用页面上已有的盘面（首页空转或上一卦结果），没有则新建
+    let innerRotor = document.getElementById('innerRotor');
+    let outerRotor = document.getElementById('outerRotor');
+    if (!innerRotor || !outerRotor) {
+      baguaDiv.innerHTML = buildRouletteSVG();
+      rouletteState.inner = 0;
+      rouletteState.outer = 0;
+      innerRotor = document.getElementById('innerRotor');
+      outerRotor = document.getElementById('outerRotor');
+    }
+
+    // 读数区（首页空转时已存在，直接复用）
+    let readout = document.getElementById('rouletteReadout');
+    if (!readout) {
+      readout = document.createElement('div');
+      readout.id = 'rouletteReadout';
+      readout.style.cssText = 'font-size:14px;color:#5a4632;margin-top:6px;text-shadow:1px 1px 2px rgba(255,255,255,0.8);';
+      baguaDiv.appendChild(readout);
+    }
+    readout.textContent = '天机运转中...';
+
+    // 预先随机决定内卦（下）与外卦（上），旋转结束后精确停在该卦位
+    const lowerIdx = Math.floor(Math.random() * 8);
+    const upperIdx = Math.floor(Math.random() * 8);
+
+    const startInner = rouletteState.inner;
+    const startOuter = rouletteState.outer;
+    let innerAng = startInner, outerAng = startOuter;
+    let innerDone = false, outerDone = false;
+
+    function updateReadout() {
+      if (!readout) return;
+      if (innerDone && outerDone) {
+        readout.textContent = `得卦：上${trigramList[upperIdx].nature}下${trigramList[lowerIdx].nature}`;
+      } else {
+        const kL = ((Math.round(-innerAng / 45) % 8) + 8) % 8;
+        const kU = ((Math.round(-outerAng / 45) % 8) + 8) % 8;
+        readout.textContent = `上${trigramList[kU].nature} · 下${trigramList[kL].nature}`;
+        // 盘心实时卦象：内环顶部=下卦，外环顶部=上卦
+        updateCenterHex(kL, kU, -1);
+      }
+    }
+
+    // 从当前角度出发：内环顺时针至少3圈，外环逆时针至少4圈，精确落在指定卦位
+    const startModI = ((startInner % 360) + 360) % 360;
+    const endModI = ((360 - (lowerIdx * 45) % 360) % 360 + 360) % 360;
+    const innerTarget = startInner + (((endModI - startModI + 360) % 360) + 360 * 3);
+
+    const startModO = ((startOuter % 360) + 360) % 360;
+    const endModO = ((360 - (upperIdx * 45) % 360) % 360 + 360) % 360;
+    const outerTarget = startOuter - (((startModO - endModO + 360) % 360) + 360 * 4);
+
+    animateRotor(innerRotor, startInner, innerTarget, 4200, ang => { innerAng = ang; rouletteState.inner = ang; updateReadout(); }, () => {
+      innerDone = true;
+      updateReadout();
+    });
+    animateRotor(outerRotor, startOuter, outerTarget, 5600, ang => { outerAng = ang; rouletteState.outer = ang; updateReadout(); }, () => {
+      outerDone = true;
+      updateReadout();
+      // 双环都停稳后，展示完整卦象
+      setTimeout(() => showRouletteResult(lowerIdx, upperIdx), 600);
+    });
+  }
+
+  // 八卦盘结果：内外卦合并为六爻，盘心卦象定格并标出变爻
+  function showRouletteResult(lowerIdx, upperIdx) {
+    const bits = (trigramList[lowerIdx].code + trigramList[upperIdx].code).split('');
+    for (let i = 0; i < 6; i++) {
+      yaoArr[i] = Number(bits[i]);
+    }
+
+    // 走原有流程：出卦名、变爻名、记录储卦、放出按钮
+    getGuaName();
+
+    // 盘心卦象定格为最终结果，变爻标红
+    updateCenterHex(lowerIdx, upperIdx, changingYaoPosition);
+
+    const readout = document.getElementById('rouletteReadout');
+    if (readout) {
+      const yaoText = document.getElementById('changingYaoName').textContent;
+      readout.textContent = `上${trigramList[upperIdx].nature}下${trigramList[lowerIdx].nature} · 变爻：${yaoText}`;
+    }
+  }
+
+  // 盘心实时卦象：六爻由下卦（内环顶部）与上卦（外环顶部）实时拼合
+  // changingPos < 0 时不标红（旋转过程中）
+  function updateCenterHex(lowerIdx, upperIdx, changingPos) {
+    const g = document.getElementById('centerHex');
+    if (!g) return;
+
+    const cx = RC, cy = RC;
+    const bw = 54, bh = 6, gap = 5;
+    const totalH = 6 * bh + 5 * gap;
+    const bits = (trigramList[lowerIdx].code + trigramList[upperIdx].code).split('');
+
+    let s = '';
+    for (let row = 0; row < 6; row++) {
+      const yaoIdx = 5 - row; // 第一行画上爻
+      const y = cy - totalH / 2 + row * (bh + gap);
+      const isChanging = (changingPos >= 0 && yaoIdx === changingPos);
+      const color = isChanging ? '#d33' : '#333';
+
+      if (bits[yaoIdx] === '1') {
+        s += `<rect x="${cx - bw / 2}" y="${y}" width="${bw}" height="${bh}" rx="1.5" fill="${color}"/>`;
+      } else {
+        const part = (bw - 5) / 2;
+        s += `<rect x="${cx - bw / 2}" y="${y}" width="${part}" height="${bh}" rx="1.5" fill="${color}"/>`;
+        s += `<rect x="${cx + bw / 2 - part}" y="${y}" width="${part}" height="${bh}" rx="1.5" fill="${color}"/>`;
+      }
+    }
+    g.innerHTML = s;
+  }
+
+  // 走马灯方式的结果展示（纯爻线，不带八卦盘的表针）
   function displayFinalHexagram() {
     let finalHexagram = '';
-    for(let i = 5; i >= 0; i--) {
+    for (let i = 5; i >= 0; i--) {
       finalHexagram += `<span data-yao="${i}">${hexagram[yaoArr[i]]}</span><br>`;
     }
-    
+
     baguaDiv.innerHTML = finalHexagram;
-    
-    const guaName = getGuaName();
-    
-    // 为变爻添加红色样式
+
     setTimeout(() => {
       const changingYaoElement = document.querySelector(`[data-yao="${changingYaoPosition}"]`);
       if (changingYaoElement) {
         changingYaoElement.classList.add('changing-yao');
       }
     }, 100);
+
+    return getGuaName();
   }
   
   //AI生成的这个卦象和机器编码对应关系 不太好，得手工调整
@@ -820,15 +989,40 @@ document.getElementById('explainButton').addEventListener('click', async functio
                 ],
       "stream":true
 		};
-    getOpenAIStream(data1);
+    await getOpenAIStream(data1);
     
   } catch (error) {
     console.error('获取解释失败：', error);
-    modalContent.innerHTML = `
-      <p>此卦为：${guaName}</p>
-      <p>变爻：${changingYaoText}</p>
-      <p>卦象解释：抱歉，获取解释失败，请稍后再试。</p>
-    `;
+
+    // 组装具体报错原因
+    let reason;
+    if (error instanceof TypeError) {
+      // fetch 抛 TypeError：浏览器拦截（跨域预检失败）或网络不通
+      reason = '请求未能发出：通常是浏览器跨域(CORS)限制或网络不通，需通过后端代理调用 AI 接口';
+    } else if (error && error.message) {
+      reason = error.message;
+    } else {
+      reason = '未知错误';
+    }
+    const parts = [];
+    if (error && error.status) parts.push(`HTTP ${error.status}`);
+    if (error && error.code) parts.push(`错误码 ${error.code}`);
+    const detail = parts.length ? `${reason}（${parts.join('，')}）` : reason;
+
+    const out = document.getElementById('output');
+    if (out) {
+      out.innerHTML = `
+        <p>抱歉，AI 解卦服务暂时不可用，请稍后再试。</p>
+        <p style="font-size:13px;color:#999;margin-top:4px;">原因：${detail}</p>
+      `;
+    } else {
+      modalContent.innerHTML = `
+        <p>此卦为：${guaName}</p>
+        <p>变爻：${changingYaoText}</p>
+        <p>卦象解释：抱歉，获取解释失败。</p>
+        <p style="font-size:13px;color:#999;">原因：${detail}</p>
+      `;
+    }
   }
 });
 var reload = true;
@@ -849,6 +1043,26 @@ async function getOpenAIStream(data1) {
         },
         body: JSON.stringify(data1)
     });
+
+    // 接口报错（鉴权失败、余额不足、模型不存在等）时把真实原因抛给调用方
+    if (!response.ok) {
+      let msg = `HTTP ${response.status}`;
+      let code = '';
+      try {
+        const errText = await response.text();
+        const errJson = JSON.parse(errText);
+        if (errJson && errJson.error) {
+          code = errJson.error.code || '';
+          msg = errJson.error.message || msg;
+        } else if (errText) {
+          msg = errText.slice(0, 200);
+        }
+      } catch (e) { /* 解析失败就用默认信息 */ }
+      const err = new Error(msg);
+      err.code = code;
+      err.status = response.status;
+      throw err;
+    }
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
@@ -951,6 +1165,9 @@ async function getOpenAIStream(data1) {
       console.error('保存数据时出错:', error);
     }
   }
+
+  // 页面加载后：首页常驻八卦盘，缓慢空转待卦
+  startRouletteIdle();
 </script>
 </body>
 </html>
