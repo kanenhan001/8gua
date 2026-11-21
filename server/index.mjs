@@ -1,7 +1,7 @@
 // 8gua API —— 卜卦 AI 解卦后端
 // 职责：
 //   1. POST /api/gua/explain  接收前端的问题 + 卦象信息，落库 SQLite，
-//      然后代理转发智谱 GLM（API Key 只存在服务端），SSE 流式透传给前端
+//      然后代理转发 AI 大模型（当前为阿里通义千问，API Key 只存在服务端），SSE 流式透传给前端
 //   2. GET  /api/health       健康检查
 // 零 npm 依赖：http + node:sqlite + 内置 fetch（Node >= 22）
 import http from 'node:http';
@@ -22,9 +22,11 @@ if (fs.existsSync(envPath)) {
 }
 
 const PORT = Number(process.env.PORT || 8123);
-const ZHIPU_KEY = process.env.ZHIPU_API_KEY || '';
-const ZHIPU_MODEL = process.env.ZHIPU_MODEL || 'glm-4-air-0111';
-const ZHIPU_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
+// 通用 OpenAI 兼容接口配置（阿里百炼 DashScope compatible-mode / 智谱 / DeepSeek 均可）
+// 优先级：AI_* > DASHSCOPE_* > ZHIPU_*
+const AI_BASE_URL = process.env.AI_BASE_URL || 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions';
+const AI_API_KEY = process.env.AI_API_KEY || process.env.DASHSCOPE_API_KEY || process.env.ZHIPU_API_KEY || '';
+const AI_MODEL = process.env.AI_MODEL || process.env.DASHSCOPE_MODEL || process.env.ZHIPU_MODEL || 'qwen-plus';
 const DB_PATH = path.join(__dirname, 'data', '8gua.db');
 
 // ---- SQLite ----
@@ -53,7 +55,7 @@ function insertReading(r) {
     INSERT INTO readings (ip, user_agent, city, question, gua_name, changing_yao, hexagram, model, ai_status)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')
   `);
-  const info = stmt.run(r.ip, r.userAgent, r.city, r.question, r.guaName, r.changingYao, r.hexagram, ZHIPU_MODEL);
+  const info = stmt.run(r.ip, r.userAgent, r.city, r.question, r.guaName, r.changingYao, r.hexagram, AI_MODEL);
   return Number(info.lastInsertRowid);
 }
 
@@ -112,7 +114,7 @@ async function handleExplain(req, res) {
   const userAgent = (req.headers['user-agent'] || '').toString().slice(0, 300);
 
   if (!guaName) return json(res, 400, { error: { code: 'bad_request', message: '缺少卦名' } });
-  if (!ZHIPU_KEY) return json(res, 500, { error: { code: 'no_key', message: '服务端未配置 AI Key' } });
+  if (!AI_API_KEY) return json(res, 500, { error: { code: 'no_key', message: '服务端未配置 AI Key' } });
 
   // 用户信息 + 占卜内容 + 卦象 先落库
   const rowId = insertReading({ ip, userAgent, city, question, guaName, changingYao, hexagram });
@@ -133,14 +135,14 @@ async function handleExplain(req, res) {
 
   let full = '';
   try {
-    const upstream = await fetch(ZHIPU_URL, {
+    const upstream = await fetch(AI_BASE_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${ZHIPU_KEY}`,
+        'Authorization': `Bearer ${AI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: ZHIPU_MODEL,
+        model: AI_MODEL,
         messages: [{ role: 'user', content: prompt }],
         stream: true,
       }),
@@ -206,7 +208,7 @@ const server = http.createServer(async (req, res) => {
   if (req.method === 'OPTIONS') { setCors(res); res.writeHead(204); return res.end(); }
 
   if (req.method === 'GET' && url === '/api/health') {
-    return json(res, 200, { ok: true, model: ZHIPU_MODEL, time: new Date().toISOString() });
+    return json(res, 200, { ok: true, model: AI_MODEL, time: new Date().toISOString() });
   }
   if (req.method === 'POST' && url === '/api/gua/explain') {
     return handleExplain(req, res);
@@ -215,5 +217,5 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, '127.0.0.1', () => {
-  console.log(`[8gua-api] listening on 127.0.0.1:${PORT}, model=${ZHIPU_MODEL}, db=${DB_PATH}`);
+  console.log(`[8gua-api] listening on 127.0.0.1:${PORT}, model=${AI_MODEL}, db=${DB_PATH}`);
 });
