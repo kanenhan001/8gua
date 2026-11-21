@@ -14,3 +14,7 @@ build/
 # 日志与临时文件
 *.log
 *.tmp
+
+# 密钥与本地数据
+.env
+server/data/
