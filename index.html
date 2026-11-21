@@ -218,24 +218,9 @@
     <button id="startButton">卜一卦</button>
     <button id="explainButton">AI解卦</button>
   </div>
-  
-  <!-- 添加卜卦方式选择 -->
-  <div class="button-container" style="margin-top: 10px; justify-content: center;">
-    <label style="margin-right: 10px;">
-      <input type="radio" name="divinationMethod" value="roulette" checked> 八卦盘
-    </label>
-    <label style="margin-right: 10px;">
-      <input type="radio" name="divinationMethod" value="single"> 单爻随机
-    </label>
-    <label>
-      <input type="radio" name="divinationMethod" value="slotMachine" disabled> 走马灯
-    </label>
-  </div>
 </div>
 <div class="footer">
-  <p style="margin: 5px 0;">本程序仅作易经八卦学习之用，不向用户收取任何费用，<br/>
-    请勿将本程序用于非法用途<br/>
-  <p style="margin: 5px 0;">© 2025 皮球爸爸 版权所有</p>
+  <p style="margin: 5px 0;">仅作易经八卦学习之用，请勿用于非法用途</p>
 </div>
 
 <div id="guaNameDiv" style="
@@ -271,10 +256,9 @@
 
   var ques = "";//测算内容
 
-  // 获取选中的卜卦方式
+  // 卜卦方式：已去掉选择按钮，固定使用八卦盘
   function getSelectedDivinationMethod() {
-    const selectedMethod = document.querySelector('input[name="divinationMethod"]:checked');
-    return selectedMethod ? selectedMethod.value : 'single';
+    return 'roulette';
   }
 
   document.getElementById('startButton').addEventListener('click', function() {
@@ -1129,7 +1113,7 @@ async function getOpenAIStream(data1) {
   
   //卜卦结果存储
   async function save2File(_question,_result){
-    var url_prex = "https://www.hanmanyi.site/dev-api/";
+    var url_prex = "https://www.kanen.site/dev-api/";
     var url = url_prex+"insert8gua";
     try {
       const city = await getUserCity(); // 等待异步操作完成
