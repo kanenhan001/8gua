@@ -27,50 +27,48 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    height: 100vh;
+    padding: 16px 12px 10px;
+    box-sizing: border-box;
   }
   .container { 
     min-width: 280px;
+    width: 100%;
     max-width: 600px;
-    padding: 20px; 
-    /* border: 1px solid #ccc; */
+    padding: 0;
     border-radius: 5px;
-    /* background-color: rgba(255, 255, 255, 0.95); */
-    /* box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); */
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 8px auto;
   }
 
   .header {
-    position: fixed;
-    top: 50px;
-    left: 0;
-    width: 100%;
+    position: static;
+    width: auto;
     background-color: transparent;
     text-align: center;
     color: black;
     font-size: 12px;
-    padding: 10px 0;
+    padding: 0;
     z-index: 1000;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    flex-shrink: 0;
   }
 
   .footer {
-    position: fixed;
-    bottom: 25px;
-    left: 0;
+    position: static;
+    margin-top: auto;
+    padding-top: 16px;
     width: 100%;
     background-color: transparent;
     text-align: center;
     color: #888;
     font-size: 12px;
-    padding: 10px 0;
+    padding-bottom: 10px;
     z-index: 10;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
     pointer-events: none;
+    flex-shrink: 0;
   }
 
   .footer p {
@@ -174,17 +172,7 @@
   }
 
   .disclaimer {
-    position: fixed;
-    bottom: 120px;  /* 调整位置在 footer 上方 */
-    left: 0;
-    width: 100%;
-    background-color: transparent;
-    text-align: center;
-    color: #888;
-    font-size: 12px;
-    padding: 10px 0;
-    z-index: 1000;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    display: none;
   }
 
   #saveToGalleryButton {
@@ -212,6 +200,17 @@
     <!-- <span style="font-size: 14px;">遇事不决，可问春风</span> -->
   </div>
 <div class="container">
+  <div id="guaNameDiv" style="
+    position: static;
+    text-align: center;
+    color: black;
+    font-size: 24px;
+    min-height: 32px;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);">
+    <span id="guaName"></span>
+    <span id="changingYaoName" style="color: black; margin-left: 10px;"></span>
+  </div>
   <div id="bagua"></div>
   <!-- 在卜一卦按钮下方添加单选按钮组 -->
   <div class="button-container">
@@ -221,19 +220,6 @@
 </div>
 <div class="footer">
   <p style="margin: 5px 0;">仅作易经八卦学习之用，请勿用于非法用途</p>
-</div>
-
-<div id="guaNameDiv" style="
-  position: absolute; 
-  left: 50%; 
-  top: 120px; 
-  transform: translateX(-50%);
-  text-align: center;
-  color: black;
-  font-size: 24px;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);">
-  <span id="guaName"></span>
-  <span id="changingYaoName" style="color: black; margin-left: 10px;"></span>
 </div>
 
 <div id="explainModal" class="modal">
@@ -556,7 +542,7 @@
   // 构建八卦盘整体 SVG
   function buildRouletteSVG() {
     const stroke = '#5a4632';
-    let svg = `<svg id="rouletteSvg" width="400" height="400" viewBox="0 0 400 400" style="max-width:100%;">`;
+    let svg = `<svg id="rouletteSvg" width="400" height="400" viewBox="0 0 400 400" style="max-width:min(400px,88vw);height:auto;display:block;">`;
     // 外盘底
     svg += `<circle cx="${RC}" cy="${RC}" r="${R_DISC}" fill="rgba(255,252,242,0.92)" stroke="${stroke}" stroke-width="3"/>`;
     // 外环分隔线
