@@ -191,6 +191,53 @@
   #saveToGalleryButton:hover {
     background-color: #2793da;  /* 稍深一点的蓝色用于悬停效果 */
   }
+
+  /* AI 解卦风格切换 */
+  #styleSwitcher {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin: 4px 0 14px;
+  }
+  .style-opt {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 14px;
+    border: 2px solid #e5dfc9;
+    border-radius: 40px;
+    background: #fffdf6;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+  }
+  .style-opt:hover {
+    border-color: #d4b96a;
+  }
+  .style-opt.active {
+    border-color: #c8971b;
+    background: #fdf6e3;
+    box-shadow: 0 2px 8px rgba(200, 151, 27, 0.18);
+  }
+  .style-opt img {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+  .style-opt .style-info { text-align: left; }
+  .style-opt .style-name {
+    font-size: 14px;
+    font-weight: bold;
+    color: #4a3b23;
+    line-height: 1.3;
+  }
+  .style-opt .style-desc {
+    font-size: 11px;
+    color: #9a8b6a;
+    line-height: 1.3;
+  }
 </style>
 </head>
 <body>
@@ -226,6 +273,22 @@
   <div id="modal-content" class="modal-content" style="max-height: 90vh; overflow-y: auto;">
     <span class="close" id="closeModal">&times;</span>
     <h2 id="modalTitle"></h2>
+    <div id="styleSwitcher">
+      <div class="style-opt" data-style="master">
+        <img src="master.jpg" alt="解卦大师">
+        <div class="style-info">
+          <div class="style-name">解卦大师</div>
+          <div class="style-desc">沉稳专业 · 引经据典</div>
+        </div>
+      </div>
+      <div class="style-opt" data-style="plain">
+        <img src="modern.jpg" alt="白话解读">
+        <div class="style-info">
+          <div class="style-name">白话解读</div>
+          <div class="style-desc">通俗易懂 · 接地气</div>
+        </div>
+      </div>
+    </div>
     <div id="modalContent"></div>
   </div>
 </div>
@@ -877,27 +940,51 @@ function getGuaName() {
 document.getElementById('explainButton').addEventListener('click', async function() {
   const modal = document.getElementById('explainModal');
   const modalTitle = document.getElementById('modalTitle');
-  const modalContent = document.getElementById('modalContent');
   const guaName = document.getElementById('guaName').textContent;
   const changingYaoText = document.getElementById('changingYaoName').textContent;
 
   reload = true;
-  
   modalTitle.textContent = `${guaName} - ${changingYaoText}`;
+  modal.style.display = "block";
+
+  await runExplain();
+});
+
+// ---- AI 解卦风格切换与请求控制 ----
+let explainStyle = 'plain';   // 默认白话解读；'master' = 解卦大师
+let explainAbort = null;      // 中止当前流式请求（切换风格/关闭弹窗时用）
+
+function updateStyleSwitcher() {
+  document.querySelectorAll('.style-opt').forEach(el => {
+    el.classList.toggle('active', el.dataset.style === explainStyle);
+  });
+}
+updateStyleSwitcher();
+
+// 发起（或重新发起）AI 解卦请求；切换风格时中止旧流并重绘
+async function runExplain() {
+  if (explainAbort) { try { explainAbort.abort(); } catch (_) {} }
+  explainAbort = new AbortController();
+
+  const guaName = document.getElementById('guaName').textContent;
+  const changingYaoText = document.getElementById('changingYaoName').textContent;
+  const modalContent = document.getElementById('modalContent');
+
+  // 清空旧内容，保留顶部基本信息 + 输出占位
   modalContent.innerHTML = `
     <p>此卦为：${guaName}</p>
     <p>变爻：${changingYaoText}</p>
     <p>您的问题：${ques}</p>
-    <p id='output'>正在AI解挂,请稍后...</p>
+    <p id='output'>正在AI解卦,请稍后...</p>
     <div style="text-align: center; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px;">
       <!-- 二维码和提示文字容器 -->
       <div id="qrcode-container" style="
         display:none !important;
-        background: #eceef0;  /* 改为更深的背景色 */
+        background: #eceef0;
         border-radius: 12px;
         padding: 20px;
         margin-bottom: 15px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);  /* 稍微加深阴影 */
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -938,18 +1025,17 @@ document.getElementById('explainButton').addEventListener('click', async functio
       ">
         <svg style="width: 22px; height: 22px;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M12 16L12 8M12 16L9 13M12 16L15 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M3 15V16C3 18.2091 4.79086 20 7 20H17C19.2091 20 21 18.2091 21 16V15M3 9V8C3 5.79086 4.79086 4 7 4H17C19.2091 4 21 5.79086 21 8V9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <path d="M3 15V16C3 18.2091 4.79086 20 7 20H17C19.2091 20 21 18.2091 21 16V15M3 9V8C3 5.79086 4.79086 4 7 4H17C19.2091 20 21 5.79086 21 8V9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
         </svg>
         保存到相册
       </button>
     </div>
   `;
-  
-  modal.style.display = "block";
 
   try {
-    await getOpenAIStream();
+    await getOpenAIStream(explainAbort.signal);
   } catch (error) {
+    if (error && error.name === 'AbortError') return; // 切换风格/关闭弹窗导致的中止，无需提示
     console.error('获取解释失败：', error);
 
     // 组装具体报错原因
@@ -982,12 +1068,24 @@ document.getElementById('explainButton').addEventListener('click', async functio
       `;
     }
   }
+}
+
+// 风格切换：点击头像卡片切换，弹窗打开时自动重新解读
+document.querySelectorAll('.style-opt').forEach(el => {
+  el.addEventListener('click', () => {
+    const s = el.dataset.style;
+    if (s === explainStyle) return;
+    explainStyle = s;
+    updateStyleSwitcher();
+    const modal = document.getElementById('explainModal');
+    if (modal.style.display === 'block') runExplain();
+  });
 });
 var reload = true;
 // 关闭按钮功能
 document.querySelector('.close').addEventListener('click', function() {
-  document.getElementById('explainModal').style.display = "none"; 
-  // 
+  document.getElementById('explainModal').style.display = "none";
+  if (explainAbort) { try { explainAbort.abort(); } catch (_) {} } // 停止流式请求
   reload = false;
 });
 
@@ -995,7 +1093,7 @@ document.querySelector('.close').addEventListener('click', function() {
 // 页面部署在服务器 nginx 上时走同源相对路径（无跨域/混合内容问题）；
 // 本地 file:// 直接打开时回退到服务器 IP 直连
 const AI_API_BASE = (location.protocol === 'file:') ? 'http://82.156.210.116/8gua-api' : '/8gua-api';
-async function getOpenAIStream() {
+async function getOpenAIStream(signal) {
     const guaName = document.getElementById('guaName').textContent;
     const changingYaoText = document.getElementById('changingYaoName').textContent;
     let city = '未知城市';
@@ -1004,12 +1102,14 @@ async function getOpenAIStream() {
     const response = await fetch(AI_API_BASE + '/api/gua/explain', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // 后端会记录：用户信息(IP/UA/城市)、问题、卦象，并代理调用 GLM
+        signal: signal,
+        // 后端会记录：用户信息(IP/UA/城市)、问题、卦象、风格，并代理调用 AI 大模型
         body: JSON.stringify({
             question: ques,
             guaName: guaName,
             changingYao: changingYaoText,
-            city: city
+            city: city,
+            style: explainStyle
         })
     });
 

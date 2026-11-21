@@ -49,13 +49,15 @@ db.exec(`
     ai_error     TEXT
   );
 `);
+// 兼容旧表：补充 style 列（记录用户选择的解卦风格）
+try { db.exec(`ALTER TABLE readings ADD COLUMN style TEXT`); } catch (_) { /* 列已存在 */ }
 
 function insertReading(r) {
   const stmt = db.prepare(`
-    INSERT INTO readings (ip, user_agent, city, question, gua_name, changing_yao, hexagram, model, ai_status)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')
+    INSERT INTO readings (ip, user_agent, city, question, gua_name, changing_yao, hexagram, model, ai_status, style)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)
   `);
-  const info = stmt.run(r.ip, r.userAgent, r.city, r.question, r.guaName, r.changingYao, r.hexagram, AI_MODEL);
+  const info = stmt.run(r.ip, r.userAgent, r.city, r.question, r.guaName, r.changingYao, r.hexagram, AI_MODEL, r.style || '');
   return Number(info.lastInsertRowid);
 }
 
@@ -112,12 +114,13 @@ async function handleExplain(req, res) {
   const city = String(body.city || '').slice(0, 100);
   const ip = (req.headers['x-real-ip'] || req.socket.remoteAddress || '').toString();
   const userAgent = (req.headers['user-agent'] || '').toString().slice(0, 300);
+  const style = body.style === 'plain' ? 'plain' : 'master';
 
   if (!guaName) return json(res, 400, { error: { code: 'bad_request', message: '缺少卦名' } });
   if (!AI_API_KEY) return json(res, 500, { error: { code: 'no_key', message: '服务端未配置 AI Key' } });
 
   // 用户信息 + 占卜内容 + 卦象 先落库
-  const rowId = insertReading({ ip, userAgent, city, question, guaName, changingYao, hexagram });
+  const rowId = insertReading({ ip, userAgent, city, question, guaName, changingYao, hexagram, style });
 
   // CORS + SSE 响应头
   setCors(res);
@@ -128,17 +131,30 @@ async function handleExplain(req, res) {
     'X-Accel-Buffering': 'no',
   });
 
-  const systemPrompt = [
-    '你是一位潜心研习《周易》多年的解卦者，风格沉稳、专业、可信，行文如传统易学注疏与现代白话的融合。',
-    '解读要求：',
-    '1. 先释卦：简述该卦的卦象结构（上下卦、卦德）与卦名本义，引用《周易》原文卦辞或变爻爻辞（文言原文后附白话解释）；',
-    '2. 再断事：将卦理与所问之事相结合，指出当前所处态势、趋势与关键变量，用语平实克制，有理有据；',
-    '3. 后予建议：给出审慎、可行的行事建议，说明取舍之理，不空谈吉凶；',
-    '4. 语言要求：庄重平实、逻辑清晰，避免网络用语、卖萌、感叹词与刻意活泼的表达；不堆砌术语，不过度绝对化断言；',
-    '5. 篇幅适中（300～500字），自然分段，可直接使用 Markdown 标题或加粗，无需客套开场白与结尾寒暄。',
-  ].join('\n');
+  // 解卦风格提示词：master = 沉稳大师（半文半白但易读），plain = 白话顾问（全白话）
+  const STYLE_PROMPTS = {
+    master: [
+      '你是一位潜心研习《周易》多年的解卦大师，风格沉稳、专业、可信。',
+      '解读要求：',
+      '1. 释卦：简述该卦的上下卦构成与卦名含义；可以引用卦辞或变爻爻辞原文，但原文之后必须紧跟通俗的白话解释，让没有古文基础的读者也能看懂；',
+      '2. 断事：把卦理与所问之事相结合，指出当前态势、趋势与关键变量，用语平实克制、有理有据；',
+      '3. 建议：给出审慎、可行的建议，并说明取舍之理，不空谈吉凶。',
+      '语言要求：庄重平实、条理清晰；整体以现代书面语为主，避免大段文言和生僻字；不用网络用语和卖萌表达；判断留有余地，不过度绝对化。',
+      '篇幅 300～500 字，分「释卦」「断事」「建议」三个小节，无需客套开场白与结尾寒暄。',
+    ].join('\n'),
+    plain: [
+      '你是一位亲切、靠谱的易经解卦顾问，用现代大白话解读卦象，像一位懂《易经》的朋友在帮忙分析，内容专业可信、不故弄玄虚。',
+      '解读要求：',
+      '1. 先给结论：直接告诉用户这一卦对他所问之事的大体判断（顺利/有阻碍/平稳/需要等待等）；',
+      '2. 再讲道理：用日常语言解释这一卦的含义（卦名象征什么、这一爻在提示什么），让完全不懂易经的人也能听懂，不要引用文言原文；',
+      '3. 最后给建议：给出具体、可操作的建议，说清楚该做什么、需要注意什么。',
+      '语言要求：自然口语但不过分活泼，不堆砌感叹词和卖萌语气词；判断留有余地，不绝对化；结合用户所问之事具体展开。',
+      '篇幅 250～400 字，用短段落组织，无需客套开场白与结尾寒暄。',
+    ].join('\n'),
+  };
 
-  const prompt = `${guaName} ${changingYao}。所问之事：${question}。请依上述体例解读此卦。`;
+  const systemPrompt = STYLE_PROMPTS[style];
+  const userPrompt = `${guaName} ${changingYao}。所问之事：${question}。请按上述体例解读此卦。`;
 
   const abort = new AbortController();
   req.on('close', () => { if (!res.writableEnded) abort.abort(); });
@@ -155,7 +171,7 @@ async function handleExplain(req, res) {
         model: AI_MODEL,
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: prompt },
+          { role: 'user', content: userPrompt },
         ],
         stream: true,
       }),
