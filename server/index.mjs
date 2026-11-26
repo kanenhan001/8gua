@@ -1,4 +1,4 @@
-// 8gua API —— 卜卦 AI 解卦后端
+// 8gua API —— 易经卦象 AI 解读后端
 // 职责：
 //   1. POST /api/gua/explain  接收前端的问题 + 卦象信息，落库 SQLite，
 //      然后代理转发 AI 大模型（当前为阿里通义千问，API Key 只存在服务端），SSE 流式透传给前端
@@ -49,7 +49,7 @@ db.exec(`
     ai_error     TEXT
   );
 `);
-// 兼容旧表：补充 style 列（记录用户选择的解卦风格）
+// 兼容旧表：补充 style 列（记录用户选择的讲卦风格）
 try { db.exec(`ALTER TABLE readings ADD COLUMN style TEXT`); } catch (_) { /* 列已存在 */ }
 
 function insertReading(r) {
@@ -101,7 +101,7 @@ function sseWrite(res, payload) {
   res.write(`data: ${JSON.stringify(payload)}\n\n`);
 }
 
-// ---- 核心：解卦代理 ----
+// ---- 核心：讲卦（卦象解读）代理 ----
 async function handleExplain(req, res) {
   let body;
   try { body = await readBody(req); }
@@ -119,7 +119,7 @@ async function handleExplain(req, res) {
   if (!guaName) return json(res, 400, { error: { code: 'bad_request', message: '缺少卦名' } });
   if (!AI_API_KEY) return json(res, 500, { error: { code: 'no_key', message: '服务端未配置 AI Key' } });
 
-  // 用户信息 + 占卜内容 + 卦象 先落库
+  // 用户信息 + 所问之事 + 卦象 先落库
   const rowId = insertReading({ ip, userAgent, city, question, guaName, changingYao, hexagram, style });
 
   // CORS + SSE 响应头
@@ -131,30 +131,30 @@ async function handleExplain(req, res) {
     'X-Accel-Buffering': 'no',
   });
 
-  // 解卦风格提示词：master = 沉稳大师（半文半白但易读），plain = 白话顾问（全白话）
+  // 讲卦风格提示词：master = 易学讲师（半文半白但易读），plain = 白话讲解（全白话）
   const STYLE_PROMPTS = {
     master: [
-      '你是一位潜心研习《周易》多年的解卦大师，风格沉稳、专业、可信。',
+      '你是一位潜心研习《周易》多年的易学讲师，从事易经文化的讲解与教学，风格沉稳、专业、可信。',
       '解读要求：',
       '1. 释卦：简述该卦的上下卦构成与卦名含义；可以引用卦辞或变爻爻辞原文，但原文之后必须紧跟通俗的白话解释，让没有古文基础的读者也能看懂；',
       '2. 断事：把卦理与所问之事相结合，指出当前态势、趋势与关键变量，用语平实克制、有理有据；',
-      '3. 建议：给出审慎、可行的建议，并说明取舍之理，不空谈吉凶。',
+      '3. 建议：结合卦理给出审慎、可行的思路，说明取舍之理，不作绝对化推断。',
       '语言要求：庄重平实、条理清晰；整体以现代书面语为主，避免大段文言和生僻字；不用网络用语和卖萌表达；判断留有余地，不过度绝对化。',
-      '篇幅 300～500 字，分「释卦」「断事」「建议」三个小节，无需客套开场白与结尾寒暄。',
+      '篇幅 300～500 字，分「释卦」「断事」「建议」三个小节，无需客套开场白与结尾寒暄；本内容仅作易经文化学习与思考参考，不作命运预测。',
     ].join('\n'),
     plain: [
-      '你是一位亲切、靠谱的易经解卦顾问，用现代大白话解读卦象，像一位懂《易经》的朋友在帮忙分析，内容专业可信、不故弄玄虚。',
+      '你是一位亲切、靠谱的易经文化讲解者，用现代大白话把卦象与卦理讲清楚，像一位懂《易经》的朋友在帮忙梳理思路，内容专业可信、不故弄玄虚。',
       '解读要求：',
-      '1. 先给结论：直接告诉用户这一卦对他所问之事的大体判断（顺利/有阻碍/平稳/需要等待等）；',
+      '1. 先给结论：直接告诉用户这一卦对其所问之事给出的思路倾向（如顺畅/有阻力/平稳/宜缓行等）；',
       '2. 再讲道理：用日常语言解释这一卦的含义（卦名象征什么、这一爻在提示什么），让完全不懂易经的人也能听懂，不要引用文言原文；',
       '3. 最后给建议：给出具体、可操作的建议，说清楚该做什么、需要注意什么。',
       '语言要求：自然口语但不过分活泼，不堆砌感叹词和卖萌语气词；判断留有余地，不绝对化；结合用户所问之事具体展开。',
-      '篇幅 250～400 字，用短段落组织，无需客套开场白与结尾寒暄。',
+      '篇幅 250～400 字，用短段落组织，无需客套开场白与结尾寒暄；本内容仅作易经文化学习与思考参考，不作命运预测。',
     ].join('\n'),
   };
 
   const systemPrompt = STYLE_PROMPTS[style];
-  const userPrompt = `${guaName} ${changingYao}。所问之事：${question}。请按上述体例解读此卦。`;
+  const userPrompt = `${guaName} ${changingYao}。所问之事：${question}。请按上述体例讲解此卦。`;
 
   const abort = new AbortController();
   req.on('close', () => { if (!res.writableEnded) abort.abort(); });

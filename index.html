@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="referrer" content="no-referrer" />
 <!-- <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests"> -->
-<title>遇事不决，可问春风</title>
+<title>春风易学 · 易经八卦学习</title>
 <script type="text/javascript" src="jquery.min.js"></script>
 <script type="text/javascript" src="marked.min.js"></script>
 <script type="text/javascript" src="sweetalert2.min.js"></script>
@@ -192,7 +192,7 @@
     background-color: #2793da;  /* 稍深一点的蓝色用于悬停效果 */
   }
 
-  /* AI 解卦风格切换 */
+  /* AI 讲卦风格切换 */
   #styleSwitcher {
     display: flex;
     justify-content: center;
@@ -259,10 +259,10 @@
     <span id="changingYaoName" style="color: black; margin-left: 10px;"></span>
   </div>
   <div id="bagua"></div>
-  <!-- 在卜一卦按钮下方添加单选按钮组 -->
+  <!-- 起卦按钮组 -->
   <div class="button-container">
-    <button id="startButton">卜一卦</button>
-    <button id="explainButton">AI解卦</button>
+    <button id="startButton">起一卦</button>
+    <button id="explainButton">AI 讲卦</button>
   </div>
 </div>
 <div class="footer">
@@ -275,16 +275,16 @@
     <h2 id="modalTitle"></h2>
     <div id="styleSwitcher">
       <div class="style-opt" data-style="master">
-        <img src="master.jpg" alt="解卦大师">
+        <img src="master.jpg" alt="易学讲师">
         <div class="style-info">
-          <div class="style-name">解卦大师</div>
+          <div class="style-name">易学讲师</div>
           <div class="style-desc">沉稳专业 · 引经据典</div>
         </div>
       </div>
       <div class="style-opt" data-style="plain">
-        <img src="modern.jpg" alt="白话解读">
+        <img src="modern.jpg" alt="白话讲解">
         <div class="style-info">
-          <div class="style-name">白话解读</div>
+          <div class="style-name">白话讲解</div>
           <div class="style-desc">通俗易懂 · 接地气</div>
         </div>
       </div>
@@ -303,40 +303,40 @@
   let changingYaoName = ''; // 变爻名称
   var yaoArr = [];
 
-  var ques = "";//测算内容
+  var ques = "";//用户想探讨的问题
 
-  // 卜卦方式：已去掉选择按钮，固定使用八卦盘
+  // 起卦方式：已去掉选择按钮，固定使用八卦盘
   function getSelectedDivinationMethod() {
     return 'roulette';
   }
 
   document.getElementById('startButton').addEventListener('click', function() {
-    var msg = "请输入您要测算的内容";
-    var btnName1 = "想好了，卜吧";
-    var btnName2 = "不卜了";
+    var msg = "请输入您本次想探讨的问题";
+    var btnName1 = "想好了，开始";
+    var btnName2 = "先看看";
 
     if(buguanum > 2){
-      msg = "相信则卜，不信则不卜，建议您一天不要卜卦超过三次哦。如果您今天卜卦结果不太好，不妨过两天 再卜卜看，说不定会有转机哦。"
-      btnName1 = "我还想再卜一次";
-      btnName2 = "好的，不卜了";
+      msg = "《易经》重在反复体会卦理。同一个问题建议不必反复起卦，可先把上次的解读记下来，过些时日再回看，往往更有收获。"
+      btnName1 = "我再起一卦";
+      btnName2 = "好的，先回看";
     }
     // 使用其他提示插件替换confirm
     Swal.fire({
-        // title: '请输入您要测算的内容',
+        // title: '请输入您本次想探讨的问题',
         text: msg,
         // icon: 'info',
         showCancelButton: true,
         confirmButtonText: btnName1,
         cancelButtonText: btnName2,
         input: 'textarea',  // 新增：添加文本框
-        inputPlaceholder: '友情提示：相同的问题不要提问多次，信则卜，不信则不卜。\r\r\n可以问吉凶、好坏、是否合适等，不要问方法，比如\'今年生意亏了，明年我该怎么办?\'，您可以把问题转换一下，改为\'今年做餐饮生意亏了，明年改做茶饮生意怎么样？\''  // 新增：文本框提示
+        inputPlaceholder: '友情提示：同一问题不必反复起卦，重在体会卦理。\r\r\n可以写下您正在思考的事情，例如\'今年做餐饮生意亏了，明年改做茶饮生意怎么样？\'，这样解读会更具体。'  // 新增：文本框提示
     }).then((result) => {
         if (result.isConfirmed) {
             // 检查用户输入是否为空
             if (!result.value) {
                 Swal.fire({
                     icon: 'warning',
-                    text: '请输入您要测算的内容！您不输入内容，无法帮您卜挂哦。'
+                    text: '请先写下您想探讨的问题，否则无法为您起卦。'
                 });
                 return; // 结束函数，等待用户输入
             }
@@ -350,7 +350,7 @@
     });
   });
 
-  // 卜卦函数
+  // 起卦函数
   function doBugua(){
      // 用户点击了确定
       count = 0;
@@ -358,7 +358,7 @@
       changingYaoName = '';
       yaoArr = [];
 
-      // 根据选择的卜卦方式执行不同的函数
+      // 根据选择的起卦方式执行不同的函数
       const method = getSelectedDivinationMethod();
 
       // 八卦盘复用页面上的盘面（首页常驻），其他方式清空重画
@@ -368,7 +368,7 @@
       document.getElementById('guaName').textContent = '';
       document.getElementById('changingYaoName').textContent = '';
 
-      // 隐藏卜卦按钮
+      // 隐藏起卦按钮
       document.getElementById('startButton').style.display = 'none';
 
       changingYaoPosition = Math.floor(Math.random() * 6);
@@ -418,7 +418,7 @@
     }
   }
   
-  // 走马灯方式卜卦
+  // 走马灯方式起卦
     function doSlotMachineDivination() {
     // 创建双轮盘容器
     baguaDiv.innerHTML = `
@@ -526,7 +526,7 @@
     }, 1000);
   }
   
-  // 八卦盘方式卜卦（双环转盘：内环下卦顺时针，外环上卦逆时针，合成64卦）
+  // 八卦盘方式起卦（双环转盘：内环下卦顺时针，外环上卦逆时针，合成64卦）
   const trigramList = [
     { name: '乾', nature: '天', code: '111' },
     { name: '兑', nature: '泽', code: '110' },
@@ -662,7 +662,7 @@
   function startRouletteIdle() {
     const token = ++rouletteToken;
     baguaDiv.innerHTML = buildRouletteSVG() +
-      `<div id="rouletteReadout" style="font-size:14px;color:#5a4632;margin-top:6px;text-shadow:1px 1px 2px rgba(255,255,255,0.8);">静心凝神，点击「卜一卦」开始</div>`;
+      `<div id="rouletteReadout" style="font-size:14px;color:#5a4632;margin-top:6px;text-shadow:1px 1px 2px rgba(255,255,255,0.8);">静心凝神，点击「起一卦」开始</div>`;
 
     const innerRotor = document.getElementById('innerRotor');
     const outerRotor = document.getElementById('outerRotor');
@@ -670,7 +670,7 @@
     let last = performance.now();
 
     function tick(now) {
-      if (token !== rouletteToken || !innerRotor || !innerRotor.isConnected) return; // 正式占卜接管或盘面被移除
+      if (token !== rouletteToken || !innerRotor || !innerRotor.isConnected) return; // 正式起卦接管或盘面被移除
       const dt = Math.min(0.1, (now - last) / 1000);
       last = now;
       rouletteState.inner = (rouletteState.inner + 10 * dt) % 360;  // 缓慢顺时针
@@ -712,7 +712,7 @@
       readout.style.cssText = 'font-size:14px;color:#5a4632;margin-top:6px;text-shadow:1px 1px 2px rgba(255,255,255,0.8);';
       baguaDiv.appendChild(readout);
     }
-    readout.textContent = '天机运转中...';
+    readout.textContent = '卦象推演中...';
 
     // 预先随机决定内卦（下）与外卦（上），旋转结束后精确停在该卦位
     const lowerIdx = Math.floor(Math.random() * 8);
@@ -922,21 +922,21 @@ function getGuaName() {
       `${yaoPositionNames[changingYaoPosition]}`;
     } 
     
-    // 显示卜卦和解卦按钮，并修改卜卦按钮文字
+    // 显示起卦和讲卦按钮，并修改起卦按钮文字
     document.getElementById('logo').style.display = 'none';
-    document.getElementById('startButton').textContent = '再卜一卦';
+    document.getElementById('startButton').textContent = '再起一卦';
     buguanum++;
     document.getElementById('startButton').style.display = 'inline-block';
     document.getElementById('explainButton').style.display = 'inline-block';
 
     const guaNameShow = document.getElementById('guaName').textContent;
     const changingYaoText = document.getElementById('changingYaoName').textContent;
-    // 占卜内容不再单独上报，统一在「AI解卦」时由后端落库
+    // 问题内容不再单独上报，统一在「AI 讲卦」时由后端落库
     
     return guaName.name;
 }
 
-// 修改 explainButton 点击事件
+// 修改 explainButton 点击事件（AI 讲卦）
 document.getElementById('explainButton').addEventListener('click', async function() {
   const modal = document.getElementById('explainModal');
   const modalTitle = document.getElementById('modalTitle');
@@ -950,8 +950,8 @@ document.getElementById('explainButton').addEventListener('click', async functio
   await runExplain();
 });
 
-// ---- AI 解卦风格切换与请求控制 ----
-let explainStyle = 'plain';   // 默认白话解读；'master' = 解卦大师
+// ---- AI 讲卦风格切换与请求控制 ----
+let explainStyle = 'plain';   // 默认白话讲解；'master' = 易学讲师
 let explainAbort = null;      // 中止当前流式请求（切换风格/关闭弹窗时用）
 
 function updateStyleSwitcher() {
@@ -961,7 +961,7 @@ function updateStyleSwitcher() {
 }
 updateStyleSwitcher();
 
-// 发起（或重新发起）AI 解卦请求；切换风格时中止旧流并重绘
+// 发起（或重新发起）AI 讲卦请求；切换风格时中止旧流并重绘
 async function runExplain() {
   if (explainAbort) { try { explainAbort.abort(); } catch (_) {} }
   explainAbort = new AbortController();
@@ -975,7 +975,7 @@ async function runExplain() {
     <p>此卦为：${guaName}</p>
     <p>变爻：${changingYaoText}</p>
     <p>您的问题：${ques}</p>
-    <p id='output'>正在AI解卦,请稍后...</p>
+    <p id='output'>正在解读卦象，请稍后...</p>
     <div style="text-align: center; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px;">
       <!-- 二维码和提示文字容器 -->
       <div id="qrcode-container" style="
@@ -1003,8 +1003,8 @@ async function runExplain() {
           line-height: 1.6;
           max-width: 300px;
         ">
-          <div style="color: #333; font-weight: 500; margin-bottom: 8px;">扫码关注<strong>春风占卜</strong>小程序</div>
-          理性查看解挂内容，请勿用于非法用途。Tips:程序打不开时可尝试多刷新几次。
+          <div style="color: #333; font-weight: 500; margin-bottom: 8px;">扫码关注<strong>春风易学</strong>小程序</div>
+          内容仅供易经八卦学习参考，请勿用于非法用途。Tips:程序打不开时可尝试多刷新几次。
         </div>
       </div>
 
@@ -1056,7 +1056,7 @@ async function runExplain() {
     const out = document.getElementById('output');
     if (out) {
       out.innerHTML = `
-        <p>抱歉，AI 解卦服务暂时不可用，请稍后再试。</p>
+        <p>抱歉，AI 解读服务暂时不可用，请稍后再试。</p>
         <p style="font-size:13px;color:#999;margin-top:4px;">原因：${detail}</p>
       `;
     } else {
@@ -1097,7 +1097,7 @@ async function getOpenAIStream(signal) {
     const guaName = document.getElementById('guaName').textContent;
     const changingYaoText = document.getElementById('changingYaoName').textContent;
     let city = '未知城市';
-    try { city = await getUserCity(); } catch (e) { /* 获取失败不影响解卦 */ }
+    try { city = await getUserCity(); } catch (e) { /* 获取失败不影响解读 */ }
 
     const response = await fetch(AI_API_BASE + '/api/gua/explain', {
         method: 'POST',
