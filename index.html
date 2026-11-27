@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="referrer" content="no-referrer" />
 <!-- <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests"> -->
-<title>遇事不决，可问春风</title>
+<title>春风易学</title>
 <script type="text/javascript" src="jquery.min.js"></script>
 <script type="text/javascript" src="marked.min.js"></script>
 <script type="text/javascript" src="sweetalert2.min.js"></script>
@@ -45,7 +45,8 @@
 
   .header {
     position: static;
-    width: auto;
+    width: 100%;
+    max-width: 600px;
     background-color: transparent;
     text-align: center;
     color: black;
@@ -53,10 +54,12 @@
     padding: 0;
     z-index: 1000;
     flex-shrink: 0;
+    align-self: flex-start;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     gap: 14px;
+    padding-left: 6px;
   }
   .header img {
     width: 52px;
@@ -93,7 +96,7 @@
     text-align: center;
     color: #888;
     font-size: 12px;
-    padding-bottom: 10px;
+    padding-bottom: 64px;
     z-index: 10;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
     pointer-events: none;
