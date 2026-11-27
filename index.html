@@ -88,19 +88,18 @@
   }
 
   .footer {
-    position: static;
-    margin-top: auto;
-    padding-top: 16px;
+    /* 固定钉在背景波浪图上方：具体 bottom 由 JS 按视口计算（positionFooter） */
+    position: fixed;
+    left: 0;
+    bottom: 48px;
     width: 100%;
     background-color: transparent;
     text-align: center;
     color: #888;
     font-size: 12px;
-    padding-bottom: 64px;
     z-index: 10;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
     pointer-events: none;
-    flex-shrink: 0;
   }
 
   .footer p {
@@ -1595,6 +1594,24 @@ async function getOpenAIStream(signal) {
     });
   }
   
+  // 底部提示固定钉在背景波浪图上方 5px：
+  // 波浪是 bg.jpg 的一部分，cover 缩放后其实际高度随视口变化，需动态计算
+  const BG_IMG_W = 615, BG_IMG_H = 991;
+  const BG_WAVE_FRAC = (991 - 947) / 991; // 波浪区占背景图高度比例（约 4.4%）
+  function positionFooter() {
+    const footer = document.querySelector('.footer');
+    if (!footer) return;
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const scale = Math.max(vw / BG_IMG_W, vh / BG_IMG_H);
+    const renderedH = BG_IMG_H * scale;
+    const waveH = BG_IMG_H * BG_WAVE_FRAC * scale;
+    // cover 垂直居中裁切时，波浪底部会被裁掉一段
+    const visibleWave = Math.max(0, waveH - Math.max(0, (renderedH - vh) / 2));
+    footer.style.bottom = (visibleWave + 5) + 'px';
+  }
+  window.addEventListener('resize', positionFooter);
+  positionFooter();
+
   // 页面加载后：首页常驻八卦盘，缓慢空转待卦
   startRouletteIdle();
 </script>
