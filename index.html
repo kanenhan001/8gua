@@ -1061,6 +1061,7 @@ async function runExplain() {
   const modalContent = document.getElementById('modalContent');
 
   // 清空旧内容，保留顶部基本信息 + 输出占位
+  stopReadAloud(); // 重新解读时停止朗读
   modalContent.innerHTML = `
     <p>此卦为：${guaName}</p>
     <p>变爻：${changingYaoText}</p>
@@ -1098,27 +1099,74 @@ async function runExplain() {
         </div>
       </div>
 
-      <!-- 保存按钮 -->
-      <button onclick="downloadPic();" class="button is-info" style="
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        padding: 12px 24px;
-        font-size: 16px;
-        font-weight: 500;
-        border-radius: 10px;
-        background: linear-gradient(135deg, #3298dc, #2793da);
-        border: none;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(50, 152, 220, 0.3);
-        cursor: pointer;
-      ">
-        <svg style="width: 22px; height: 22px;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 16L12 8M12 16L9 13M12 16L15 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M3 15V16C3 18.2091 4.79086 20 7 20H17C19.2091 20 21 18.2091 21 16V15M3 9V8C3 5.79086 4.79086 4 7 4H17C19.2091 20 21 5.79086 21 8V9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        </svg>
-        保存到相册
-      </button>
+      <!-- 操作按钮区：语音朗读 / 保存到相册 / 分享 -->
+      <div style="display: flex; justify-content: center; gap: 14px; flex-wrap: wrap;">
+        <button id="readAloudBtn" onclick="toggleReadAloud();" style="
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          padding: 12px 24px;
+          font-size: 16px;
+          font-weight: 500;
+          border-radius: 10px;
+          background: linear-gradient(135deg, #48c774, #3db869);
+          color: #fff;
+          border: none;
+          transition: all 0.3s ease;
+          box-shadow: 0 4px 15px rgba(72, 199, 116, 0.3);
+          cursor: pointer;
+        ">
+          <svg style="width: 22px; height: 22px;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M11 5L6 9H2V15H6L11 19V5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M15.5 8.5C16.4 9.4 17 10.6 17 12C17 13.4 16.4 14.6 15.5 15.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M18.5 5.5C20.1 7.1 21 9.4 21 12C21 14.6 20.1 16.9 18.5 18.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span id="readAloudText">语音朗读</span>
+        </button>
+        <button onclick="downloadPic();" class="button is-info" style="
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          padding: 12px 24px;
+          font-size: 16px;
+          font-weight: 500;
+          border-radius: 10px;
+          background: linear-gradient(135deg, #3298dc, #2793da);
+          border: none;
+          transition: all 0.3s ease;
+          box-shadow: 0 4px 15px rgba(50, 152, 220, 0.3);
+          cursor: pointer;
+        ">
+          <svg style="width: 22px; height: 22px;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 16L12 8M12 16L9 13M12 16L15 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M3 15V16C3 18.2091 4.79086 20 7 20H17C19.2091 20 21 18.2091 21 16V15M3 9V8C3 5.79086 4.79086 4 7 4H17C19.2091 20 21 5.79086 21 8V9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          保存到相册
+        </button>
+        <button onclick="openShareSheet();" style="
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          padding: 12px 24px;
+          font-size: 16px;
+          font-weight: 500;
+          border-radius: 10px;
+          background: linear-gradient(135deg, #ff9f43, #ff8a2a);
+          color: #fff;
+          border: none;
+          transition: all 0.3s ease;
+          box-shadow: 0 4px 15px rgba(255, 143, 46, 0.3);
+          cursor: pointer;
+        ">
+          <svg style="width: 22px; height: 22px;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="18" cy="5" r="3" stroke="currentColor" stroke-width="2"/>
+            <circle cx="6" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+            <circle cx="18" cy="19" r="3" stroke="currentColor" stroke-width="2"/>
+            <path d="M8.6 10.7L15.4 6.5M8.6 13.3L15.4 17.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          分享
+        </button>
+      </div>
     </div>
   `;
 
@@ -1176,6 +1224,7 @@ var reload = true;
 document.querySelector('.close').addEventListener('click', function() {
   document.getElementById('explainModal').style.display = "none";
   if (explainAbort) { try { explainAbort.abort(); } catch (_) {} } // 停止流式请求
+  stopReadAloud(); // 停止语音朗读
   reload = false;
 });
 
@@ -1260,6 +1309,126 @@ async function getOpenAIStream(signal) {
           
       }
     }
+  }
+
+  // ---- 语音朗读（Web Speech API，默认关闭，点击开始/停止） ----
+  function setReadAloudUI(on) {
+    const t = document.getElementById('readAloudText');
+    const btn = document.getElementById('readAloudBtn');
+    if (t) t.textContent = on ? '停止朗读' : '语音朗读';
+    if (btn) btn.style.background = on
+      ? 'linear-gradient(135deg, #f14668, #e03c5f)'
+      : 'linear-gradient(135deg, #48c774, #3db869)';
+  }
+
+  function stopReadAloud() {
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    setReadAloudUI(false);
+  }
+
+  function toggleReadAloud() {
+    if (!('speechSynthesis' in window)) {
+      showToast('当前浏览器不支持语音朗读，请使用 Chrome / Edge');
+      return;
+    }
+    // 正在朗读 → 停止
+    if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+      stopReadAloud();
+      return;
+    }
+    // 组装朗读文本：卦名标题 + 解读正文
+    const title = (document.getElementById('modalTitle').textContent || '').trim();
+    const body = document.getElementById('output');
+    const text = (title ? title + '。' : '') + (body ? body.innerText : '');
+    if (!text.trim()) {
+      showToast('暂无可朗读的内容');
+      return;
+    }
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'zh-CN';
+    u.rate = 0.95;
+    u.pitch = 1;
+    u.onend = () => setReadAloudUI(false);
+    u.onerror = () => setReadAloudUI(false);
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(u);
+    setReadAloudUI(true);
+  }
+
+  // ---- 分享（保存图片 / 发送给朋友 / 分享到朋友圈） ----
+  function showToast(title) {
+    if (window.Swal) {
+      Swal.fire({ toast: true, position: 'center', showConfirmButton: false, timer: 2000, title: title });
+    } else {
+      alert(title);
+    }
+  }
+
+  // http 环境下 navigator.clipboard 不可用，降级 execCommand
+  function copyText(text) {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text);
+        return true;
+      }
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.cssText = 'position:fixed;top:-999px;opacity:0;';
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      return ok;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function getShareUrl() {
+    return location.protocol.startsWith('http')
+      ? location.origin + location.pathname.replace(/[^/]*$/, '')
+      : 'http://82.156.210.116/8gua/';
+  }
+
+  function openShareSheet() {
+    const title = (document.getElementById('modalTitle').textContent || '易经卦象解读').trim();
+    const shareUrl = getShareUrl();
+    const btnCss = 'width:100%;padding:14px 0;font-size:16px;font-weight:500;border:none;border-radius:10px;cursor:pointer;color:#fff;';
+    Swal.fire({
+      title: '分享这份解读',
+      html: `
+        <div style="display:flex;flex-direction:column;gap:12px;margin-top:6px;">
+          <button id="share-save" style="${btnCss}background:linear-gradient(135deg,#3298dc,#2793da);">🖼️ 保存图片</button>
+          <button id="share-friend" style="${btnCss}background:linear-gradient(135deg,#48c774,#3db869);">💬 发送给朋友</button>
+          <button id="share-moments" style="${btnCss}background:linear-gradient(135deg,#ff9f43,#ff8a2a);">🌐 分享到朋友圈</button>
+        </div>`,
+      showConfirmButton: false,
+      showCloseButton: true,
+      didOpen: (popup) => {
+        popup.querySelector('#share-save').addEventListener('click', () => {
+          Swal.close();
+          downloadPic();
+        });
+        popup.querySelector('#share-friend').addEventListener('click', async () => {
+          Swal.close();
+          if (navigator.share) {
+            try { await navigator.share({ title: title, text: '我在春风易学起了一卦：' + title, url: shareUrl }); } catch (e) { /* 用户取消忽略 */ }
+          } else if (copyText(shareUrl)) {
+            showToast('链接已复制，去粘贴发给朋友吧');
+          } else {
+            showToast('复制失败，请手动复制地址栏链接');
+          }
+        });
+        popup.querySelector('#share-moments').addEventListener('click', async () => {
+          Swal.close();
+          if (copyText(shareUrl)) {
+            showToast('链接已复制，发朋友圈时粘贴即可；也可先保存图片配文发送');
+          } else {
+            showToast('复制失败，请手动复制地址栏链接');
+          }
+        });
+      }
+    });
   }
 
   // 保存到相册：将解卦结果卡片截图并下载为 PNG
