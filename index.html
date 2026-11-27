@@ -1461,6 +1461,44 @@ async function getOpenAIStream(signal) {
     });
   }
 
+  // 在二维码 canvas 中央绘制白底圆形系统 logo，完成后同步 img 元素；logo 加载失败则保持原二维码
+  function drawQrLogo(qrHolder) {
+    return new Promise((resolve) => {
+      const canvas = qrHolder.querySelector('canvas');
+      if (!canvas || !canvas.getContext) { resolve(); return; }
+      const logo = new Image();
+      logo.onload = () => {
+        try {
+          const ctx = canvas.getContext('2d');
+          const size = canvas.width;
+          const ls = size * 0.24;                 // logo 直径（占二维码 24%，H 级容错 30% 内安全）
+          const cx = size / 2;
+          // 白色圆底（带细灰描边），保证 logo 与码点之间有干净间隔
+          ctx.save();
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(cx, cx, ls / 2 + size * 0.03, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.lineWidth = 1;
+          ctx.strokeStyle = '#e0e0e0';
+          ctx.stroke();
+          // 圆形裁剪绘制 logo
+          ctx.beginPath();
+          ctx.arc(cx, cx, ls / 2, 0, Math.PI * 2);
+          ctx.clip();
+          ctx.drawImage(logo, cx - ls / 2, cx - ls / 2, ls, ls);
+          ctx.restore();
+          // qrcodejs 会同时生成 img 镜像，同步刷新
+          const img = qrHolder.querySelector('img');
+          if (img) img.src = canvas.toDataURL();
+        } catch (e) { /* 绘制失败保持原二维码 */ }
+        resolve();
+      };
+      logo.onerror = () => resolve();
+      logo.src = 'logo.png';
+    });
+  }
+
   // 保存到相册：将解卦结果卡片截图并下载为 PNG
   async function downloadPic() {
     const target = document.getElementById('modal-content');
@@ -1478,6 +1516,7 @@ async function getOpenAIStream(signal) {
     if (closeIcon) closeIcon.style.visibility = 'hidden';
 
     // 截图前在卡片底部追加「系统地址二维码 + 扫码起卦」区块，截图后移除
+    // 二维码中央叠加系统 logo（容错级别 H，遮挡 30% 仍可识别）
     let qrBlock = null;
     try {
       if (typeof QRCode !== 'undefined') {
@@ -1488,7 +1527,8 @@ async function getOpenAIStream(signal) {
         qrBlock.style.cssText = 'padding:20px 0 28px;text-align:center;background:#ffffff;border-top:1px solid #f0f0f0;';
         const qrHolder = document.createElement('div');
         qrHolder.style.cssText = 'display:inline-block;padding:10px;border:1px solid #ececec;border-radius:10px;';
-        new QRCode(qrHolder, { text: siteUrl, width: 140, height: 140, correctLevel: QRCode.CorrectLevel.M });
+        new QRCode(qrHolder, { text: siteUrl, width: 140, height: 140, correctLevel: QRCode.CorrectLevel.H });
+        await drawQrLogo(qrHolder);
         qrBlock.appendChild(qrHolder);
         const tip = document.createElement('div');
         tip.textContent = '扫码起卦';
