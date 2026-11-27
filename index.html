@@ -310,6 +310,93 @@
     return 'roulette';
   }
 
+  // 语音输入：在问题输入框右下角注入麦克风图标，点击开始/停止语音识别，识别结果实时写入输入框
+  function setupVoiceInput(popup) {
+    const textarea = popup.querySelector('.swal2-textarea');
+    if (!textarea) return;
+    const Recognizer = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    // 用相对定位容器包住 textarea，方便把麦克风图标绝对定位在框内
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'position:relative;';
+    textarea.parentNode.insertBefore(wrap, textarea);
+    wrap.appendChild(textarea);
+    textarea.style.width = '100%';
+    textarea.style.margin = '0';
+    textarea.style.resize = 'none';
+
+    const mic = document.createElement('button');
+    mic.type = 'button';
+    mic.title = '语音输入';
+    mic.style.cssText = 'position:absolute;right:10px;bottom:10px;width:34px;height:34px;border:none;border-radius:50%;background:#f3f4f6;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;transition:all .2s;';
+    mic.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><path d="M12 19v3"/></svg>';
+    wrap.appendChild(mic);
+
+    let recog = null;
+    let listening = false;
+    let baseText = '';    // 开始录音时输入框已有内容
+    let finalText = '';   // 本次录音已确定的识别结果
+
+    function stopListening() {
+      try { recog && recog.stop(); } catch (e) { /* 忽略 */ }
+    }
+    // 弹窗关闭时释放麦克风
+    window._stopVoiceInput = stopListening;
+
+    function setMicIdle() {
+      listening = false;
+      mic.style.background = '#f3f4f6';
+      mic.style.boxShadow = 'none';
+      mic.title = '语音输入';
+    }
+    function setMicListening() {
+      listening = true;
+      mic.style.background = '#fee2e2';
+      mic.style.boxShadow = '0 0 0 4px rgba(239,68,68,.15)';
+      mic.title = '正在聆听，点击结束';
+    }
+    function showTip(text) {
+      Swal.showValidationMessage(text);
+      setTimeout(() => Swal.resetValidationMessage(), 2600);
+    }
+
+    if (!Recognizer) {
+      mic.style.opacity = '0.35';
+      mic.title = '当前浏览器不支持语音输入';
+      mic.addEventListener('click', () => showTip('当前浏览器不支持语音输入，请使用最新版 Chrome 或 Edge。'));
+      return;
+    }
+
+    mic.addEventListener('click', () => {
+      if (listening) { stopListening(); return; }
+      recog = new Recognizer();
+      recog.lang = 'zh-CN';
+      recog.continuous = true;
+      recog.interimResults = true;
+      baseText = textarea.value ? textarea.value.replace(/\n+$/, '') + '\n' : '';
+      finalText = '';
+      recog.onresult = (e) => {
+        let interim = '';
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          const t = e.results[i][0].transcript;
+          if (e.results[i].isFinal) { finalText += t; } else { interim += t; }
+        }
+        textarea.value = baseText + finalText + interim;
+      };
+      recog.onend = setMicIdle;
+      recog.onerror = (e) => {
+        setMicIdle();
+        const tips = {
+          'not-allowed': '麦克风权限被拒绝，请在浏览器地址栏允许使用麦克风。',
+          'no-speech': '没有听到声音，请靠近一点再试。',
+          'network': '语音服务网络异常，请稍后再试。'
+        };
+        showTip(tips[e.error] || '语音识别出错，请再试一次。');
+      };
+      try { recog.start(); setMicListening(); } catch (err) { /* start 冲突时静默 */ }
+    });
+  }
+
   document.getElementById('startButton').addEventListener('click', function() {
     var msg = "请输入您本次想探讨的问题";
     var btnName1 = "想好了，开始";
@@ -329,7 +416,9 @@
         confirmButtonText: btnName1,
         cancelButtonText: btnName2,
         input: 'textarea',  // 新增：添加文本框
-        inputPlaceholder: '友情提示：同一问题不必反复起卦，重在体会卦理。\r\r\n可以写下您正在思考的事情，例如\'今年做餐饮生意亏了，明年改做茶饮生意怎么样？\'，这样解读会更具体。'  // 新增：文本框提示
+        inputPlaceholder: '友情提示：同一问题不必反复起卦，重在体会卦理。\r\r\n建议围绕「可不可行、合不合适、好不好、要不要」这类问题来提问，例如「现在换行做茶饮生意可不可行？」，这样解读会更明确。',  // 新增：文本框提示
+        didOpen: (popup) => { setupVoiceInput(popup); },   // 注入语音输入麦克风图标
+        willClose: () => { if (window._stopVoiceInput) window._stopVoiceInput(); }  // 关闭弹窗释放麦克风
     }).then((result) => {
         if (result.isConfirmed) {
             // 检查用户输入是否为空
