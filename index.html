@@ -1142,14 +1142,17 @@ async function runExplain() {
         </div>
       </div>
 
-      <!-- 操作按钮区：语音朗读 / 保存到相册 / 分享 -->
-      <div style="display: flex; justify-content: center; gap: 14px; flex-wrap: wrap;">
+      <!-- 操作按钮区：朗读 / 保存 / 分享（紧凑单行） -->
+      <div style="display: flex; justify-content: center; gap: 8px; flex-wrap: nowrap;">
         <button id="readAloudBtn" onclick="toggleReadAloud();" style="
           display: inline-flex;
           align-items: center;
-          gap: 10px;
-          padding: 12px 24px;
-          font-size: 16px;
+          justify-content: center;
+          gap: 6px;
+          flex: 1 1 0;
+          min-width: 0;
+          padding: 9px 6px;
+          font-size: 15px;
           font-weight: 500;
           border-radius: 10px;
           background: linear-gradient(135deg, #48c774, #3db869);
@@ -1159,19 +1162,22 @@ async function runExplain() {
           box-shadow: 0 4px 15px rgba(72, 199, 116, 0.3);
           cursor: pointer;
         ">
-          <svg style="width: 22px; height: 22px;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg style="width: 17px; height: 17px; flex-shrink: 0;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M11 5L6 9H2V15H6L11 19V5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             <path d="M15.5 8.5C16.4 9.4 17 10.6 17 12C17 13.4 16.4 14.6 15.5 15.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             <path d="M18.5 5.5C20.1 7.1 21 9.4 21 12C21 14.6 20.1 16.9 18.5 18.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
           </svg>
-          <span id="readAloudText">语音朗读</span>
+          <span id="readAloudText">朗读</span>
         </button>
         <button onclick="downloadPic();" class="button is-info" style="
           display: inline-flex;
           align-items: center;
-          gap: 10px;
-          padding: 12px 24px;
-          font-size: 16px;
+          justify-content: center;
+          gap: 6px;
+          flex: 1 1 0;
+          min-width: 0;
+          padding: 9px 6px;
+          font-size: 15px;
           font-weight: 500;
           border-radius: 10px;
           background: linear-gradient(135deg, #3298dc, #2793da);
@@ -1180,18 +1186,21 @@ async function runExplain() {
           box-shadow: 0 4px 15px rgba(50, 152, 220, 0.3);
           cursor: pointer;
         ">
-          <svg style="width: 22px; height: 22px;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg style="width: 17px; height: 17px; flex-shrink: 0;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 16L12 8M12 16L9 13M12 16L15 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             <path d="M3 15V16C3 18.2091 4.79086 20 7 20H17C19.2091 20 21 18.2091 21 16V15M3 9V8C3 5.79086 4.79086 4 7 4H17C19.2091 20 21 5.79086 21 8V9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
           </svg>
-          保存到相册
+          保存
         </button>
         <button onclick="openShareSheet();" style="
           display: inline-flex;
           align-items: center;
-          gap: 10px;
-          padding: 12px 24px;
-          font-size: 16px;
+          justify-content: center;
+          gap: 6px;
+          flex: 1 1 0;
+          min-width: 0;
+          padding: 9px 6px;
+          font-size: 15px;
           font-weight: 500;
           border-radius: 10px;
           background: linear-gradient(135deg, #ff9f43, #ff8a2a);
@@ -1201,7 +1210,7 @@ async function runExplain() {
           box-shadow: 0 4px 15px rgba(255, 143, 46, 0.3);
           cursor: pointer;
         ">
-          <svg style="width: 22px; height: 22px;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg style="width: 17px; height: 17px; flex-shrink: 0;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <circle cx="18" cy="5" r="3" stroke="currentColor" stroke-width="2"/>
             <circle cx="6" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
             <circle cx="18" cy="19" r="3" stroke="currentColor" stroke-width="2"/>
@@ -1358,7 +1367,7 @@ async function getOpenAIStream(signal) {
   function setReadAloudUI(on) {
     const t = document.getElementById('readAloudText');
     const btn = document.getElementById('readAloudBtn');
-    if (t) t.textContent = on ? '停止朗读' : '语音朗读';
+    if (t) t.textContent = on ? '停止' : '朗读';
     if (btn) btn.style.background = on
       ? 'linear-gradient(135deg, #f14668, #e03c5f)'
       : 'linear-gradient(135deg, #48c774, #3db869)';
@@ -1399,9 +1408,9 @@ async function getOpenAIStream(signal) {
   }
 
   // ---- 分享（保存图片 / 发送给朋友 / 分享到朋友圈） ----
-  function showToast(title) {
+  function showToast(title, duration) {
     if (window.Swal) {
-      Swal.fire({ toast: true, position: 'center', showConfirmButton: false, timer: 2000, title: title });
+      Swal.fire({ toast: true, position: 'center', showConfirmButton: false, timer: duration || 2000, title: title });
     } else {
       alert(title);
     }
@@ -1436,6 +1445,7 @@ async function getOpenAIStream(signal) {
   function openShareSheet() {
     const title = (document.getElementById('modalTitle').textContent || '易经卦象解读').trim();
     const shareUrl = getShareUrl();
+    const inWeChat = isWeChat();
     const btnCss = 'width:100%;padding:14px 0;font-size:16px;font-weight:500;border:none;border-radius:10px;cursor:pointer;color:#fff;';
     Swal.fire({
       title: '分享这份解读',
@@ -1450,22 +1460,29 @@ async function getOpenAIStream(signal) {
       didOpen: (popup) => {
         popup.querySelector('#share-save').addEventListener('click', () => {
           Swal.close();
-          downloadPic();
+          downloadPic(); // 微信内会自动走「全屏预览 + 长按保存」
         });
         popup.querySelector('#share-friend').addEventListener('click', async () => {
           Swal.close();
-          if (navigator.share) {
+          if (inWeChat) {
+            // 微信内网页无权限直接唤起转发面板，只能引导右上角菜单
+            showToast('请点击右上角「···」选择「发送给朋友」', 3200);
+          } else if (navigator.share) {
             try { await navigator.share({ title: title, text: '我在春风易学起了一卦：' + title, url: shareUrl }); } catch (e) { /* 用户取消忽略 */ }
           } else if (copyText(shareUrl)) {
-            showToast('链接已复制，去粘贴发给朋友吧');
+            showToast('链接已复制，去粘贴发给朋友吧', 3200);
           } else {
             showToast('复制失败，请手动复制地址栏链接');
           }
         });
         popup.querySelector('#share-moments').addEventListener('click', async () => {
           Swal.close();
-          if (copyText(shareUrl)) {
-            showToast('链接已复制，发朋友圈时粘贴即可；也可先保存图片配文发送');
+          if (inWeChat) {
+            showToast('请点击右上角「···」选择「分享到朋友圈」', 3200);
+          } else if (navigator.share) {
+            try { await navigator.share({ title: title, text: '我在春风易学起了一卦：' + title, url: shareUrl }); } catch (e) { /* 用户取消忽略 */ }
+          } else if (copyText(shareUrl)) {
+            showToast('链接已复制，发朋友圈时粘贴即可；也可先保存图片配文发送', 3200);
           } else {
             showToast('复制失败，请手动复制地址栏链接');
           }
@@ -1559,11 +1576,17 @@ async function getOpenAIStream(signal) {
         useCORS: true,
         backgroundColor: '#ffffff',
       });
-      const link = document.createElement('a');
+      const dataUrl = canvas.toDataURL('image/png');
       const title = (document.getElementById('modalTitle').textContent || '解卦结果').trim();
-      link.download = title + '.png';
-      link.href = canvas.toDataURL('image/png');
-      link.click();
+      if (isWeChat()) {
+        // 微信内置浏览器不支持 a[download]，改为全屏预览，提示长按保存到相册
+        showSaveImagePreview(dataUrl);
+      } else {
+        const link = document.createElement('a');
+        link.download = title + '.png';
+        link.href = dataUrl;
+        link.click();
+      }
     } catch (e) {
       console.error('生成图片失败：', e);
       if (window.Swal) {
@@ -1576,6 +1599,31 @@ async function getOpenAIStream(signal) {
       if (btn) btn.style.visibility = '';
       if (closeIcon) closeIcon.style.visibility = '';
     }
+  }
+
+  // 是否在微信内置浏览器中
+  function isWeChat() {
+    return /MicroMessenger/i.test(navigator.userAgent);
+  }
+
+  // 微信内保存图片：全屏展示生成的长图，提示长按保存（微信/手机浏览器通用兜底方案）
+  function showSaveImagePreview(dataUrl) {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:3000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;';
+    const img = document.createElement('img');
+    img.src = dataUrl;
+    img.style.cssText = 'max-width:92%;max-height:76vh;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.5);';
+    const tip = document.createElement('div');
+    tip.textContent = '👆 长按图片即可保存到手机相册';
+    tip.style.cssText = 'margin-top:16px;color:#fff;font-size:15px;text-align:center;';
+    const close = document.createElement('div');
+    close.textContent = '✕ 点击任意位置关闭';
+    close.style.cssText = 'margin-top:8px;color:rgba(255,255,255,.55);font-size:12px;';
+    overlay.appendChild(img);
+    overlay.appendChild(tip);
+    overlay.appendChild(close);
+    overlay.addEventListener('click', () => overlay.remove());
+    document.body.appendChild(overlay);
   }
 
   // 使用免费的 IP 地理位置 API
