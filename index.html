@@ -11,6 +11,7 @@
 <script type="text/javascript" src="marked.min.js"></script>
 <script type="text/javascript" src="sweetalert2.min.js"></script>
 <script type="text/javascript" src="html2canvas.min.js"></script>
+<script type="text/javascript" src="qrcode.min.js"></script>
 <link href="bulma.min.css" rel="stylesheet">
 
 <style>
@@ -1277,6 +1278,29 @@ async function getOpenAIStream(signal) {
     if (btn) btn.style.visibility = 'hidden';
     if (closeIcon) closeIcon.style.visibility = 'hidden';
 
+    // 截图前在卡片底部追加「系统地址二维码 + 扫码起卦」区块，截图后移除
+    let qrBlock = null;
+    try {
+      if (typeof QRCode !== 'undefined') {
+        const siteUrl = location.protocol.startsWith('http')
+          ? location.origin + location.pathname.replace(/[^/]*$/, '')
+          : 'http://82.156.210.116/8gua/';
+        qrBlock = document.createElement('div');
+        qrBlock.style.cssText = 'padding:20px 0 28px;text-align:center;background:#ffffff;border-top:1px solid #f0f0f0;';
+        const qrHolder = document.createElement('div');
+        qrHolder.style.cssText = 'display:inline-block;padding:10px;border:1px solid #ececec;border-radius:10px;';
+        new QRCode(qrHolder, { text: siteUrl, width: 140, height: 140, correctLevel: QRCode.CorrectLevel.M });
+        qrBlock.appendChild(qrHolder);
+        const tip = document.createElement('div');
+        tip.textContent = '扫码起卦';
+        tip.style.cssText = 'margin-top:10px;font-size:17px;font-weight:600;color:#333;letter-spacing:3px;';
+        qrBlock.appendChild(tip);
+        target.appendChild(qrBlock);
+      }
+    } catch (e) {
+      console.error('生成二维码失败：', e);
+    }
+
     try {
       const canvas = await html2canvas(target, {
         scale: 2,
@@ -1294,6 +1318,7 @@ async function getOpenAIStream(signal) {
         Swal.fire({ icon: 'error', title: '生成图片失败', text: '请稍后再试' });
       }
     } finally {
+      if (qrBlock) qrBlock.remove();
       target.style.maxHeight = oldMaxHeight;
       target.style.overflowY = oldOverflow;
       if (btn) btn.style.visibility = '';
