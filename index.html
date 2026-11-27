@@ -1172,6 +1172,46 @@ async function getOpenAIStream(signal) {
     }
   }
 
+  // 保存到相册：将解卦结果卡片截图并下载为 PNG
+  async function downloadPic() {
+    const target = document.getElementById('modal-content');
+    if (!target) return;
+    const btn = target.querySelector('button.button.is-info');
+    const closeIcon = target.querySelector('.close');
+
+    // 临时展开完整高度，避免长图被 max-height/overflow 裁剪
+    const oldMaxHeight = target.style.maxHeight;
+    const oldOverflow = target.style.overflowY;
+    target.style.maxHeight = 'none';
+    target.style.overflowY = 'visible';
+    // 截图时隐藏按钮和关闭图标（visibility 保持占位，布局不跳动）
+    if (btn) btn.style.visibility = 'hidden';
+    if (closeIcon) closeIcon.style.visibility = 'hidden';
+
+    try {
+      const canvas = await html2canvas(target, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+      });
+      const link = document.createElement('a');
+      const title = (document.getElementById('modalTitle').textContent || '解卦结果').trim();
+      link.download = title + '.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch (e) {
+      console.error('生成图片失败：', e);
+      if (window.Swal) {
+        Swal.fire({ icon: 'error', title: '生成图片失败', text: '请稍后再试' });
+      }
+    } finally {
+      target.style.maxHeight = oldMaxHeight;
+      target.style.overflowY = oldOverflow;
+      if (btn) btn.style.visibility = '';
+      if (closeIcon) closeIcon.style.visibility = '';
+    }
+  }
+
   // 使用免费的 IP 地理位置 API
   async function getUserCity() {
     return new Promise((resolve, reject) => {
