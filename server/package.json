@@ -5,5 +5,8 @@
   "private": true,
   "scripts": {
     "start": "node index.mjs"
+  },
+  "dependencies": {
+    "msedge-tts": "^2.1.1"
   }
 }

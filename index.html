@@ -1363,7 +1363,12 @@ async function getOpenAIStream(signal) {
     }
   }
 
-  // ---- 语音朗读（Web Speech API，默认关闭，点击开始/停止） ----
+  // ---- 语音朗读（服务端 Edge TTS 合成 mp3 + Audio 播放；微信内核不支持原生
+  // speechSynthesis，方案参考健身指导专家项目。接口失败时回落浏览器 TTS） ----
+  let readAloudSession = 0; // 会话序号：停止/新开一次即失效旧播放循环
+  let readAloudAudio = null;
+  let readAloudAbort = null;
+
   function setReadAloudUI(on) {
     const t = document.getElementById('readAloudText');
     const btn = document.getElementById('readAloudBtn');
@@ -1374,37 +1379,115 @@ async function getOpenAIStream(signal) {
   }
 
   function stopReadAloud() {
+    readAloudSession++; // 让正在跑的播放循环立刻退出
+    if (readAloudAudio) { try { readAloudAudio.pause(); } catch (_) {} readAloudAudio = null; }
+    if (readAloudAbort) { try { readAloudAbort.abort(); } catch (_) {} readAloudAbort = null; }
     if ('speechSynthesis' in window) window.speechSynthesis.cancel();
     setReadAloudUI(false);
   }
 
-  function toggleReadAloud() {
-    if (!('speechSynthesis' in window)) {
-      showToast('当前浏览器不支持语音朗读，请使用 Chrome / Edge');
-      return;
-    }
-    // 正在朗读 → 停止
-    if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
-      stopReadAloud();
-      return;
-    }
-    // 组装朗读文本：卦名标题 + 解读正文
+  function getReadAloudText() {
     const title = (document.getElementById('modalTitle').textContent || '').trim();
     const body = document.getElementById('output');
     const text = (title ? title + '。' : '') + (body ? body.innerText : '');
-    if (!text.trim()) {
-      showToast('暂无可朗读的内容');
-      return;
+    return text.replace(/\s+/g, ' ').trim();
+  }
+
+  /** 文本切句：按句末标点断开，每段 ≤ 180 字（接口上限 500，留余量） */
+  function splitSentences(text) {
+    const parts = text.split(/(?<=[。！？；!?;\n])/).map(s => s.trim()).filter(Boolean);
+    const out = [];
+    for (const p of parts) {
+      if (p.length <= 180) { out.push(p); continue; }
+      for (let i = 0; i < p.length; i += 180) out.push(p.slice(i, i + 180));
     }
+    return out;
+  }
+
+  /** 服务端合成一句 mp3；失败返回 null */
+  async function fetchTtsAudio(text, signal) {
+    const res = await fetch(AI_API_BASE + '/api/gua/tts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: text, rate: 0.95 }),
+      signal: signal,
+    });
+    if (!res.ok) throw new Error('tts http ' + res.status);
+    const blob = await res.blob();
+    return blob.size > 512 ? URL.createObjectURL(blob) : null;
+  }
+
+  /** 浏览器原生 TTS 兜底（仅微信外可用） */
+  function speakWithBrowser(text, session, onDone) {
+    if (!('speechSynthesis' in window)) { onDone(); return; }
     const u = new SpeechSynthesisUtterance(text);
     u.lang = 'zh-CN';
     u.rate = 0.95;
-    u.pitch = 1;
-    u.onend = () => setReadAloudUI(false);
-    u.onerror = () => setReadAloudUI(false);
-    window.speechSynthesis.cancel();
+    u.onend = () => { if (session === readAloudSession) onDone(); };
+    u.onerror = () => { if (session === readAloudSession) onDone(); };
     window.speechSynthesis.speak(u);
+    // 部分内核不触发 onend：按字数设超时兜底
+    window.setTimeout(() => { if (session === readAloudSession) onDone(); }, Math.min(30000, 2000 + text.length * 250));
+  }
+
+  async function toggleReadAloud() {
+    // 正在朗读 → 停止
+    if (readAloudAudio || ('speechSynthesis' in window && (window.speechSynthesis.speaking || window.speechSynthesis.pending))) {
+      stopReadAloud();
+      return;
+    }
+    const text = getReadAloudText();
+    if (!text) {
+      showToast('暂无可朗读的内容');
+      return;
+    }
+    const session = ++readAloudSession;
+    readAloudAbort = new AbortController();
     setReadAloudUI(true);
+    const finish = () => { if (session === readAloudSession) setReadAloudUI(false); };
+    const sentences = splitSentences(text);
+
+    // 逐句合成并连续播放；任何一句网络失败 → 整体回落浏览器 TTS
+    try {
+      for (const s of sentences) {
+        if (session !== readAloudSession) return; // 已被停止
+        let url = null;
+        try { url = await fetchTtsAudio(s, readAloudAbort.signal); } catch (e) {
+          if (readAloudAbort.signal.aborted || session !== readAloudSession) return;
+          throw e; // 触发整体回落
+        }
+        if (session !== readAloudSession) return;
+        if (!url) continue;
+        await new Promise((resolve) => {
+          const a = new Audio(url);
+          readAloudAudio = a;
+          let settled = false;
+          const done = () => {
+            if (settled) return;
+            settled = true;
+            readAloudAudio = null;
+            URL.revokeObjectURL(url);
+            resolve();
+          };
+          a.onended = done;
+          a.onerror = done;
+          a.play().catch(done);
+          // 播放超时兜底（约每字 0.35s + 3s 余量）
+          window.setTimeout(done, Math.min(60000, 3000 + s.length * 350));
+        });
+        if (session !== readAloudSession) return;
+      }
+      finish(); // 全部播完
+    } catch (e) {
+      if (session !== readAloudSession) return;
+      // 服务端 TTS 不可用：微信外回落浏览器 TTS；微信内只能提示
+      if ('speechSynthesis' in window && !isWeChat()) {
+        speakWithBrowser(text, session, finish);
+      } else {
+        setReadAloudUI(false);
+        showToast('语音服务暂时不可用，请稍后再试', 2600);
+      }
+    }
   }
 
   // ---- 分享（保存图片 / 发送给朋友 / 分享到朋友圈） ----
@@ -1443,9 +1526,6 @@ async function getOpenAIStream(signal) {
   }
 
   function openShareSheet() {
-    const title = (document.getElementById('modalTitle').textContent || '易经卦象解读').trim();
-    const shareUrl = getShareUrl();
-    const inWeChat = isWeChat();
     const btnCss = 'width:100%;padding:14px 0;font-size:16px;font-weight:500;border:none;border-radius:10px;cursor:pointer;color:#fff;';
     Swal.fire({
       title: '分享这份解读',
@@ -1462,30 +1542,13 @@ async function getOpenAIStream(signal) {
           Swal.close();
           downloadPic(); // 微信内会自动走「全屏预览 + 长按保存」
         });
-        popup.querySelector('#share-friend').addEventListener('click', async () => {
+        popup.querySelector('#share-friend').addEventListener('click', () => {
           Swal.close();
-          if (inWeChat) {
-            // 微信内网页无权限直接唤起转发面板，只能引导右上角菜单
-            showToast('请点击右上角「···」选择「发送给朋友」', 3200);
-          } else if (navigator.share) {
-            try { await navigator.share({ title: title, text: '我在春风易学起了一卦：' + title, url: shareUrl }); } catch (e) { /* 用户取消忽略 */ }
-          } else if (copyText(shareUrl)) {
-            showToast('链接已复制，去粘贴发给朋友吧', 3200);
-          } else {
-            showToast('复制失败，请手动复制地址栏链接');
-          }
+          shareResultImage('friend'); // 分享本次解卦长图
         });
-        popup.querySelector('#share-moments').addEventListener('click', async () => {
+        popup.querySelector('#share-moments').addEventListener('click', () => {
           Swal.close();
-          if (inWeChat) {
-            showToast('请点击右上角「···」选择「分享到朋友圈」', 3200);
-          } else if (navigator.share) {
-            try { await navigator.share({ title: title, text: '我在春风易学起了一卦：' + title, url: shareUrl }); } catch (e) { /* 用户取消忽略 */ }
-          } else if (copyText(shareUrl)) {
-            showToast('链接已复制，发朋友圈时粘贴即可；也可先保存图片配文发送', 3200);
-          } else {
-            showToast('复制失败，请手动复制地址栏链接');
-          }
+          shareResultImage('moments'); // 分享本次解卦长图
         });
       }
     });
@@ -1530,9 +1593,13 @@ async function getOpenAIStream(signal) {
   }
 
   // 保存到相册：将解卦结果卡片截图并下载为 PNG
-  async function downloadPic() {
+  /**
+   * 生成解卦长图（含底部「扫码起卦」二维码）：截图前临时展开高度、隐藏按钮、
+   * 追加二维码区块，完成后恢复原样。返回 { dataUrl, title }。
+   */
+  async function buildResultCanvas() {
     const target = document.getElementById('modal-content');
-    if (!target) return;
+    if (!target) throw new Error('modal not found');
     const btn = target.querySelector('button.button.is-info');
     const closeIcon = target.querySelector('.close');
 
@@ -1576,8 +1643,20 @@ async function getOpenAIStream(signal) {
         useCORS: true,
         backgroundColor: '#ffffff',
       });
-      const dataUrl = canvas.toDataURL('image/png');
       const title = (document.getElementById('modalTitle').textContent || '解卦结果').trim();
+      return { dataUrl: canvas.toDataURL('image/png'), title: title };
+    } finally {
+      if (qrBlock) qrBlock.remove();
+      target.style.maxHeight = oldMaxHeight;
+      target.style.overflowY = oldOverflow;
+      if (btn) btn.style.visibility = '';
+      if (closeIcon) closeIcon.style.visibility = '';
+    }
+  }
+
+  async function downloadPic() {
+    try {
+      const { dataUrl, title } = await buildResultCanvas();
       if (isWeChat()) {
         // 微信内置浏览器不支持 a[download]，改为全屏预览，提示长按保存到相册
         showSaveImagePreview(dataUrl);
@@ -1592,12 +1671,6 @@ async function getOpenAIStream(signal) {
       if (window.Swal) {
         Swal.fire({ icon: 'error', title: '生成图片失败', text: '请稍后再试' });
       }
-    } finally {
-      if (qrBlock) qrBlock.remove();
-      target.style.maxHeight = oldMaxHeight;
-      target.style.overflowY = oldOverflow;
-      if (btn) btn.style.visibility = '';
-      if (closeIcon) closeIcon.style.visibility = '';
     }
   }
 
@@ -1624,6 +1697,69 @@ async function getOpenAIStream(signal) {
     overlay.appendChild(close);
     overlay.addEventListener('click', () => overlay.remove());
     document.body.appendChild(overlay);
+  }
+
+  // 分享解卦图片：微信内展示长图 + 分场景引导（微信不允许网页直接唤起转发/朋友圈面板）
+  function showShareImagePreview(dataUrl, scenario) {
+    const tipText = scenario === 'moments'
+      ? '👆 长按图片保存到相册，发朋友圈时从相册选择这张图'
+      : '👆 长按图片保存到相册，聊天时点「➕ → 相册」选择这张图发给朋友';
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:3000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;';
+    const img = document.createElement('img');
+    img.src = dataUrl;
+    img.style.cssText = 'max-width:92%;max-height:74vh;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.5);';
+    const tip = document.createElement('div');
+    tip.textContent = tipText;
+    tip.style.cssText = 'margin-top:16px;color:#fff;font-size:15px;text-align:center;line-height:1.6;max-width:92%;';
+    const close = document.createElement('div');
+    close.textContent = '✕ 点击任意位置关闭';
+    close.style.cssText = 'margin-top:8px;color:rgba(255,255,255,.55);font-size:12px;';
+    overlay.appendChild(img);
+    overlay.appendChild(tip);
+    overlay.appendChild(close);
+    overlay.addEventListener('click', () => overlay.remove());
+    document.body.appendChild(overlay);
+  }
+
+  /** 生成解卦长图并执行分享动作（微信内引导长按保存；微信外优先带图系统分享） */
+  async function shareResultImage(scenario) {
+    let result;
+    try {
+      result = await buildResultCanvas();
+    } catch (e) {
+      console.error('生成分享图片失败：', e);
+      showToast('生成图片失败，请稍后再试');
+      return;
+    }
+    const { dataUrl, title } = result;
+    if (isWeChat()) {
+      showShareImagePreview(dataUrl, scenario);
+      return;
+    }
+    // 微信外：优先 navigator.share 直接带图片分享（安卓 Chrome/Edge 支持）
+    try {
+      const blob = await (await fetch(dataUrl)).blob();
+      const file = new File([blob], title + '.png', { type: 'image/png' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: title, text: '我在春风易学起了一卦：' + title });
+        return;
+      }
+      if (navigator.share) {
+        await navigator.share({ title: title, text: '我在春风易学起了一卦：' + title, url: getShareUrl() });
+        return;
+      }
+    } catch (e) {
+      if (e && e.name === 'AbortError') return; // 用户取消
+      console.warn('系统分享失败，降级下载：', e);
+    }
+    // 兜底：下载图片 + 复制链接
+    const link = document.createElement('a');
+    link.download = title + '.png';
+    link.href = dataUrl;
+    link.click();
+    copyText(getShareUrl());
+    showToast('图片已开始下载，链接已复制，去发布时选用即可', 3200);
   }
 
   // 使用免费的 IP 地理位置 API
